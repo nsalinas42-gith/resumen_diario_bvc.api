@@ -235,8 +235,8 @@ export default function App() {
                       disabled={isSyncing}
                       className="w-full flex items-center justify-center gap-2 p-2.5 rounded-lg bg-accent-blue text-white cursor-pointer hover:bg-accent-blue/90 transition-all disabled:opacity-50"
                     >
-                      {isSyncing ? <Loader2 className="animate-spin" size={16} /> : <Activity size={16} />}
-                      <span className="font-medium text-xs">Sincronizar BVC</span>
+                      {isSyncing ? <Loader2 className="animate-spin" size={16} /> : <FileText size={16} />}
+                      <span className="font-medium text-xs">Sincronizar Datos</span>
                     </button>
 
                     <label className="flex items-center justify-center gap-2 p-2.5 rounded-lg bg-accent-purple text-white cursor-pointer hover:bg-accent-purple/90 transition-all">
@@ -290,8 +290,8 @@ export default function App() {
                   onClick={() => setIsAuthenticating(true)}
                   className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border-2 border-dashed border-grid-color text-text-dim hover:border-accent-blue/50 hover:text-accent-blue transition-all"
                 >
-                  <Activity size={18} />
-                  <span className="hidden sm:inline font-bold text-[10px] uppercase whitespace-nowrap">Actualización BVC</span>
+                  <FileText size={18} />
+                  <span className="hidden sm:inline font-bold text-[10px] uppercase whitespace-nowrap">Actualización de Datos</span>
                 </button>
               )}
             </AnimatePresence>
@@ -327,7 +327,7 @@ export default function App() {
                       className="bg-bg-center p-1 rounded-lg border border-grid-color flex items-center gap-2"
                     >
                       <button onClick={() => syncWithBVC()} className="p-1 text-accent-blue hover:bg-white/5 rounded-md" title="Sync">
-                        <Activity size={14} />
+                        <FileText size={14} />
                       </button>
                       <button onClick={() => setShowAdminPanel(false)} className="p-1 text-text-dim hover:text-white">
                         <ChevronRight size={14} className="rotate-90" />
@@ -338,7 +338,7 @@ export default function App() {
                       onClick={() => setIsAuthenticating(true)}
                       className="p-1.5 rounded-lg border border-grid-color text-text-dim hover:text-accent-blue"
                     >
-                      <Activity size={14} />
+                      <FileText size={14} />
                     </button>
                   )}
                 </AnimatePresence>
@@ -396,26 +396,9 @@ export default function App() {
                   />
                 </div>
 
-                {/* Charts Row */}
-                <div className={`grid grid-cols-1 ${isWidget ? 'md:grid-cols-2 lg:grid-cols-3' : 'lg:grid-cols-3'} gap-4`}>
-                  <div className={`${isWidget ? 'lg:col-span-2' : 'lg:col-span-2'} bg-bg-center ${isWidget ? 'p-4' : 'p-6'} rounded-2xl border border-grid-color shadow-sm`}>
-                    <h3 className={`font-bold ${isWidget ? 'text-[10px] uppercase tracking-wider mb-4' : 'text-lg mb-6'} text-white`}>Top Volumen</h3>
-                    <div className={`${isWidget ? 'h-[200px]' : 'h-[300px]'} w-full`}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={data.summary?.topVolumeActions.slice(0, 5)}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#191e3a" />
-                          <XAxis dataKey="ticker" axisLine={false} tickLine={false} tick={{fill: '#888ea8', fontSize: 10}} dy={5} />
-                          <YAxis axisLine={false} tickLine={false} tick={{fill: '#888ea8', fontSize: 10}} />
-                          <Tooltip 
-                            cursor={{fill: '#191e3a'}} 
-                            contentStyle={{backgroundColor: '#060818', borderRadius: '8px', border: '1px solid #191e3a', fontSize: '11px'}}
-                          />
-                          <Bar dataKey="volume" fill="#4361ee" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-
+                {/* Charts Area - Stacked vertically */}
+                <div className="space-y-4">
+                  {/* Indices de Mercado */}
                   <div className={`bg-bg-center ${isWidget ? 'p-4' : 'p-6'} rounded-2xl border border-grid-color shadow-sm text-text-main`}>
                     <h3 className={`font-bold ${isWidget ? 'text-[10px] uppercase tracking-wider mb-4' : 'text-lg mb-6'} text-white`}>Índices de Mercado</h3>
                     <div className={`${isWidget ? 'space-y-2' : 'space-y-4'}`}>
@@ -430,6 +413,25 @@ export default function App() {
                           </div>
                         </div>
                       ))}
+                    </div>
+                  </div>
+
+                  {/* Top Volumen */}
+                  <div className={`bg-bg-center ${isWidget ? 'p-4' : 'p-6'} rounded-2xl border border-grid-color shadow-sm`}>
+                    <h3 className={`font-bold ${isWidget ? 'text-[10px] uppercase tracking-wider mb-4' : 'text-lg mb-6'} text-white`}>Top Volumen</h3>
+                    <div className={`${isWidget ? 'h-[200px]' : 'h-[300px]'} w-full`}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={data.summary?.topVolumeActions.slice(0, 5)}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#191e3a" />
+                          <XAxis dataKey="ticker" axisLine={false} tickLine={false} tick={{fill: '#888ea8', fontSize: 10}} dy={5} />
+                          <YAxis axisLine={false} tickLine={false} tick={{fill: '#888ea8', fontSize: 10}} />
+                          <Tooltip 
+                            cursor={{fill: '#191e3a'}} 
+                            contentStyle={{backgroundColor: '#060818', borderRadius: '8px', border: '1px solid #191e3a', fontSize: '11px'}}
+                          />
+                          <Bar dataKey="volume" fill="#4361ee" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
                     </div>
                   </div>
                 </div>
