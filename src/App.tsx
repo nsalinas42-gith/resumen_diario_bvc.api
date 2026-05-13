@@ -396,10 +396,10 @@ export default function App() {
                   />
                 </div>
 
-                {/* Charts Area - Stacked vertically */}
-                <div className="space-y-4">
-                  {/* Indices de Mercado */}
-                  <div className={`bg-bg-center ${isWidget ? 'p-4' : 'p-6'} rounded-2xl border border-grid-color shadow-sm text-text-main`}>
+                {/* Charts Area - 40/60 Responsive Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-10 gap-[10px]">
+                  {/* Indices de Mercado - Left Column (40%) */}
+                  <div className={`lg:col-span-4 bg-bg-center ${isWidget ? 'p-4' : 'p-6'} rounded-2xl border border-grid-color shadow-sm text-text-main`}>
                     <h3 className={`font-bold ${isWidget ? 'text-[10px] uppercase tracking-wider mb-4' : 'text-lg mb-6'} text-white`}>Índices de Mercado</h3>
                     <div className={`${isWidget ? 'space-y-2' : 'space-y-4'}`}>
                       {data.indices.map((idx) => (
@@ -416,8 +416,8 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Top Volumen */}
-                  <div className={`bg-bg-center ${isWidget ? 'p-4' : 'p-6'} rounded-2xl border border-grid-color shadow-sm`}>
+                  {/* Top Volumen - Right Column (60%) */}
+                  <div className={`lg:col-span-6 bg-bg-center ${isWidget ? 'p-4' : 'p-6'} rounded-2xl border border-grid-color shadow-sm`}>
                     <h3 className={`font-bold ${isWidget ? 'text-[10px] uppercase tracking-wider mb-4' : 'text-lg mb-6'} text-white`}>Top Volumen</h3>
                     <div className={`${isWidget ? 'h-[200px]' : 'h-[300px]'} w-full`}>
                       <ResponsiveContainer width="100%" height="100%">
