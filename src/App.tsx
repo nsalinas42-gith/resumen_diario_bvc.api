@@ -198,100 +198,100 @@ export default function App() {
                 <span className="font-medium hidden md:block">Data Grid</span>
               </button>
             </div>
-          </div>
 
-          <div className="absolute bottom-6 left-0 w-full px-6 space-y-4">
-            <AnimatePresence>
-              {showAdminPanel ? (
-                <motion.div 
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="space-y-4 overflow-hidden"
-                >
-                  <div className="bg-bg-deep p-3 rounded-lg border border-grid-color hidden md:block">
-                    <p className="text-[10px] font-bold text-text-dim uppercase mb-2">SYNC Manual (PDF URL)</p>
+            <div className="mt-10 space-y-4">
+              <AnimatePresence>
+                {showAdminPanel ? (
+                  <motion.div 
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="space-y-4 overflow-hidden"
+                  >
+                    <div className="bg-bg-deep p-3 rounded-lg border border-grid-color hidden md:block">
+                      <p className="text-[10px] font-bold text-text-dim uppercase mb-2">SYNC Manual (PDF URL)</p>
+                      <div className="flex gap-1">
+                        <input 
+                          type="text" 
+                          placeholder="https://..." 
+                          className="flex-1 bg-bg-center border border-grid-color rounded p-1 text-[10px] text-text-main focus:outline-none focus:ring-1 focus:ring-accent-blue"
+                          value={syncUrl}
+                          onChange={(e) => setSyncUrl(e.target.value)}
+                        />
+                        <button 
+                          onClick={() => syncWithBVC(syncUrl)}
+                          disabled={!syncUrl || isSyncing}
+                          className="bg-accent-blue text-white p-1 rounded disabled:opacity-50"
+                        >
+                          <ChevronRight size={14} />
+                        </button>
+                      </div>
+                    </div>
+
+                    <button 
+                      onClick={() => syncWithBVC()}
+                      disabled={isSyncing}
+                      className="w-full flex items-center gap-3 p-3 rounded-lg bg-accent-blue text-white cursor-pointer hover:bg-accent-blue/90 transition-all shadow-md group disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSyncing ? <Loader2 className="animate-spin flex-shrink-0" size={20} /> : <Activity size={20} className="flex-shrink-0 group-hover:animate-pulse" />}
+                      <span className="font-medium text-sm hidden md:block overflow-hidden whitespace-nowrap">Sincronizar BVC</span>
+                    </button>
+
+                    <label className="flex items-center gap-3 p-3 rounded-lg bg-accent-purple text-white cursor-pointer hover:bg-accent-purple/90 transition-all shadow-md group">
+                      <Upload size={20} className="flex-shrink-0 group-hover:scale-110 transition-transform" />
+                      <span className="font-medium text-sm hidden md:block overflow-hidden whitespace-nowrap">Subir Captura</span>
+                      <input type="file" multiple className="hidden" onChange={handleFileUpload} accept="image/*" />
+                    </label>
+
+                    <button 
+                      onClick={() => setShowAdminPanel(false)}
+                      className="w-full py-2 text-[10px] font-bold text-text-dim hover:text-text-main transition-colors uppercase"
+                    >
+                      Cerrar Panel
+                    </button>
+                  </motion.div>
+                ) : isAuthenticating ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="bg-bg-center p-4 rounded-xl border border-grid-color shadow-xl"
+                  >
+                    <p className="text-[10px] font-bold text-text-dim uppercase mb-2">Ingrese Contraseña</p>
                     <div className="flex gap-1">
                       <input 
-                        type="text" 
-                        placeholder="https://..." 
-                        className="flex-1 bg-bg-center border border-grid-color rounded p-1 text-[10px] text-text-main focus:outline-none focus:ring-1 focus:ring-accent-blue"
-                        value={syncUrl}
-                        onChange={(e) => setSyncUrl(e.target.value)}
+                        type="password" 
+                        placeholder="****" 
+                        autoFocus
+                        className="flex-1 bg-bg-deep border border-grid-color rounded p-2 text-sm text-text-main focus:outline-none focus:ring-1 focus:ring-accent-blue"
+                        value={passwordInput}
+                        onChange={(e) => setPasswordInput(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleVerifyPassword()}
                       />
                       <button 
-                        onClick={() => syncWithBVC(syncUrl)}
-                        disabled={!syncUrl || isSyncing}
-                        className="bg-accent-blue text-white p-1 rounded disabled:opacity-50"
+                        onClick={handleVerifyPassword}
+                        className="bg-accent-blue text-white px-3 rounded"
                       >
-                        <ChevronRight size={14} />
+                        <ChevronRight size={16} />
                       </button>
                     </div>
-                  </div>
-
-                  <button 
-                    onClick={() => syncWithBVC()}
-                    disabled={isSyncing}
-                    className="w-full flex items-center gap-3 p-3 rounded-lg bg-accent-blue text-white cursor-pointer hover:bg-accent-blue/90 transition-all shadow-md group disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isSyncing ? <Loader2 className="animate-spin flex-shrink-0" size={20} /> : <Activity size={20} className="flex-shrink-0 group-hover:animate-pulse" />}
-                    <span className="font-medium text-sm hidden md:block overflow-hidden whitespace-nowrap">Sincronizar BVC</span>
-                  </button>
-
-                  <label className="flex items-center gap-3 p-3 rounded-lg bg-accent-purple text-white cursor-pointer hover:bg-accent-purple/90 transition-all shadow-md group">
-                    <Upload size={20} className="flex-shrink-0 group-hover:scale-110 transition-transform" />
-                    <span className="font-medium text-sm hidden md:block overflow-hidden whitespace-nowrap">Subir Captura</span>
-                    <input type="file" multiple className="hidden" onChange={handleFileUpload} accept="image/*" />
-                  </label>
-
-                  <button 
-                    onClick={() => setShowAdminPanel(false)}
-                    className="w-full py-2 text-[10px] font-bold text-text-dim hover:text-text-main transition-colors uppercase"
-                  >
-                    Cerrar Panel
-                  </button>
-                </motion.div>
-              ) : isAuthenticating ? (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="bg-bg-center p-4 rounded-xl border border-grid-color shadow-xl"
-                >
-                  <p className="text-[10px] font-bold text-text-dim uppercase mb-2">Ingrese Contraseña</p>
-                  <div className="flex gap-1">
-                    <input 
-                      type="password" 
-                      placeholder="****" 
-                      autoFocus
-                      className="flex-1 bg-bg-deep border border-grid-color rounded p-2 text-sm text-text-main focus:outline-none focus:ring-1 focus:ring-accent-blue"
-                      value={passwordInput}
-                      onChange={(e) => setPasswordInput(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleVerifyPassword()}
-                    />
                     <button 
-                      onClick={handleVerifyPassword}
-                      className="bg-accent-blue text-white px-3 rounded"
+                      onClick={() => setIsAuthenticating(false)}
+                      className="w-full mt-2 text-[10px] text-text-dim hover:text-text-main font-bold uppercase transition-colors"
                     >
-                      <ChevronRight size={16} />
+                      Cancelar
                     </button>
-                  </div>
+                  </motion.div>
+                ) : (
                   <button 
-                    onClick={() => setIsAuthenticating(false)}
-                    className="w-full mt-2 text-[10px] text-text-dim hover:text-text-main font-bold uppercase transition-colors"
+                    onClick={() => setIsAuthenticating(true)}
+                    className="w-full flex items-center justify-center gap-2 p-3 rounded-lg border-2 border-dashed border-grid-color text-text-dim hover:border-accent-blue/50 hover:text-accent-blue transition-all font-bold text-xs uppercase"
                   >
-                    Cancelar
+                    <Activity size={16} />
+                    <span className="hidden md:inline">Actualización de Datos BVC</span>
                   </button>
-                </motion.div>
-              ) : (
-                <button 
-                  onClick={() => setIsAuthenticating(true)}
-                  className="w-full flex items-center justify-center gap-2 p-3 rounded-lg border-2 border-dashed border-grid-color text-text-dim hover:border-accent-blue/50 hover:text-accent-blue transition-all font-bold text-xs uppercase"
-                >
-                  <Activity size={16} />
-                  <span className="hidden md:inline">Actualización BVC</span>
-                </button>
-              )}
-            </AnimatePresence>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </nav>
       )}
