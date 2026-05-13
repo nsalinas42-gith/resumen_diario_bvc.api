@@ -297,21 +297,19 @@ export default function App() {
       )}
 
       {/* Main Content */}
-      <main className={`${isWidget ? 'pl-0' : 'pl-20 md:pl-64'} pt-6 transition-all duration-300`}>
-        <div className="max-w-7xl mx-auto px-4 md:px-8 pb-12">
+      <main className={`${isWidget ? 'pl-0 bg-transparent' : 'pl-20 md:pl-64'} ${isWidget ? 'pt-2' : 'pt-6'} transition-all duration-300`}>
+        <div className={`${isWidget ? 'max-w-full px-2' : 'max-w-7xl mx-auto px-4 md:px-8'} pb-6`}>
           {/* Header */}
-          <header className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-            <div className="flex items-center gap-4">
-              {isWidget && (
-                <div className="w-10 h-10 bg-accent-blue rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-accent-blue/20">
-                  <TrendingUp className="text-white w-6 h-6" />
-                </div>
-              )}
+          <header className={`flex items-center justify-between ${isWidget ? 'mb-4' : 'mb-8'} gap-4`}>
+            <div className="flex items-center gap-3">
+              <div className={`${isWidget ? 'w-8 h-8 rounded-lg' : 'w-10 h-10 rounded-xl'} bg-accent-blue flex items-center justify-center flex-shrink-0 shadow-lg shadow-accent-blue/20`}>
+                <TrendingUp className="text-white w-5 h-5" />
+              </div>
               <div>
-                <h1 className={`${isWidget ? 'text-2xl' : 'text-3xl'} font-bold text-white leading-tight`}>
-                  {isWidget ? 'Resumen BVC' : 'Mercado de Valores'}
+                <h1 className={`${isWidget ? 'text-lg' : 'text-3xl'} font-bold text-white leading-tight`}>
+                  {isWidget ? 'Resumen de Mercado' : 'Mercado de Valores'}
                 </h1>
-                <p className="text-text-dim font-medium">Bolsa de Valores de Caracas &bull; {data.summary?.date || 'Cargando...'}</p>
+                {!isWidget && <p className="text-text-dim font-medium text-sm">Bolsa de Valores de Caracas &bull; {data.summary?.date || 'Cargando...'}</p>}
               </div>
             </div>
 
@@ -323,43 +321,21 @@ export default function App() {
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: 20 }}
-                      className="bg-bg-center p-2 rounded-lg border border-grid-color flex items-center gap-3"
+                      className="bg-bg-center p-1 rounded-lg border border-grid-color flex items-center gap-2"
                     >
-                      <button onClick={() => syncWithBVC()} className="p-1.5 text-accent-blue hover:bg-white/5 rounded-md transition-colors" title="Sync manual">
-                        <Activity size={16} />
+                      <button onClick={() => syncWithBVC()} className="p-1 text-accent-blue hover:bg-white/5 rounded-md" title="Sync">
+                        <Activity size={14} />
                       </button>
-                      <label className="p-1.5 text-accent-purple hover:bg-white/5 rounded-md transition-colors cursor-pointer" title="Subir captura">
-                        <Upload size={16} />
-                        <input type="file" multiple className="hidden" onChange={handleFileUpload} accept="image/*" />
-                      </label>
-                      <button onClick={() => setShowAdminPanel(false)} className="p-1.5 text-text-dim hover:text-white" title="Cerrar">
-                        <ChevronRight size={16} className="rotate-90" />
+                      <button onClick={() => setShowAdminPanel(false)} className="p-1 text-text-dim hover:text-white">
+                        <ChevronRight size={14} className="rotate-90" />
                       </button>
-                    </motion.div>
-                  ) : isAuthenticating ? (
-                    <motion.div 
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="flex gap-1"
-                    >
-                      <input 
-                        type="password" 
-                        placeholder="Clave"
-                        autoFocus
-                        className="w-24 bg-bg-center border border-grid-color rounded px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-accent-blue"
-                        value={passwordInput}
-                        onChange={(e) => setPasswordInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleVerifyPassword()}
-                      />
-                      <button onClick={() => setIsAuthenticating(false)} className="text-text-dim p-1">X</button>
                     </motion.div>
                   ) : (
                     <button 
                       onClick={() => setIsAuthenticating(true)}
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-grid-color text-text-dim hover:text-accent-blue transition-colors text-xs font-bold uppercase"
+                      className="p-1.5 rounded-lg border border-grid-color text-text-dim hover:text-accent-blue"
                     >
                       <Activity size={14} />
-                      Actualizar
                     </button>
                   )}
                 </AnimatePresence>
@@ -369,15 +345,12 @@ export default function App() {
 
           {isProcessing && (
             <motion.div 
-              initial={{ opacity: 0, y: -20 }}
+              initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-accent-blue text-white px-6 py-4 rounded-xl mb-8 flex items-center gap-4 shadow-xl shadow-accent-blue/20"
+              className="bg-accent-blue text-white px-4 py-2 rounded-lg mb-4 flex items-center gap-3 text-xs"
             >
-              <Loader2 className="animate-spin" />
-              <div>
-                <p className="font-bold">Analizando reporte con AI...</p>
-                <p className="text-blue-100 text-sm">Extrayendo tablas y widgets financieros del PDF.</p>
-              </div>
+              <Loader2 className="animate-spin w-4 h-4" />
+              <span>Actualizando datos...</span>
             </motion.div>
           )}
 
@@ -385,85 +358,75 @@ export default function App() {
             {view === 'dashboard' ? (
               <motion.div 
                 key="dashboard"
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="space-y-8"
+                exit={{ opacity: 0, y: -10 }}
+                className={`${isWidget ? 'space-y-4' : 'space-y-8'}`}
               >
                 {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className={`grid grid-cols-2 ${isWidget ? 'lg:grid-cols-2' : 'lg:grid-cols-4'} gap-4`}>
                   <StatCard 
-                    label="Volumen Total (Bs)" 
+                    label="Vol. Bs" 
                     value={data.summary?.totalVolumeBs.toLocaleString()} 
-                    icon={<Activity className="text-accent-blue" />}
-                    trend="+2.4%"
-                    positive={true}
+                    small={isWidget}
                   />
                   <StatCard 
-                    label="Volumen Total (USD)" 
+                    label="Vol. USD" 
                     value={`$${data.summary?.totalVolumeUsd.toLocaleString()}`} 
-                    icon={<DollarSign className="text-accent-green" />}
-                    trend="+1.8%"
-                    positive={true}
+                    small={isWidget}
                   />
                   <StatCard 
-                    label="Dólar Oficial (SMC)" 
+                    label="Tasa SMC" 
                     value={data.summary?.dollarRate.toFixed(4)} 
-                    icon={<ArrowRightLeft className="text-orange-400" />}
-                    sublabel="Bs / USD"
-                    positive={true}
+                    small={isWidget}
                   />
                   <StatCard 
-                    label="Índice IBC" 
+                    label="IBC" 
                     value={data.indices.find(i => i.name === 'IBC')?.points.toLocaleString()} 
-                    icon={<TrendingUp className="text-accent-purple" />}
                     trend={`${data.indices.find(i => i.name === 'IBC')?.change}%`}
                     positive={(data.indices.find(i => i.name === 'IBC')?.change || 0) > 0}
+                    small={isWidget}
                   />
                 </div>
 
                 {/* Charts Row */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  <div className="lg:col-span-2 bg-bg-center p-6 rounded-2xl border border-grid-color shadow-sm">
-                    <div className="flex items-center justify-between mb-6">
-                      <h3 className="font-bold text-lg text-white">Top Movimientos por Volumen (Bs)</h3>
-                      <TrendingUp size={20} className="text-text-dim" />
-                    </div>
-                    <div className="h-[300px] w-full">
+                <div className={`grid grid-cols-1 ${!isWidget ? 'lg:grid-cols-3' : ''} gap-4`}>
+                  <div className={`${!isWidget ? 'lg:col-span-2' : ''} bg-bg-center ${isWidget ? 'p-4' : 'p-6'} rounded-2xl border border-grid-color shadow-sm`}>
+                    <h3 className={`font-bold ${isWidget ? 'text-xs uppercase tracking-wider mb-4' : 'text-lg mb-6'} text-white`}>Top Volumen</h3>
+                    <div className={`${isWidget ? 'h-[180px]' : 'h-[300px]'} w-full`}>
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={data.summary?.topVolumeActions.slice(0, 5)}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#191e3a" />
-                          <XAxis dataKey="ticker" axisLine={false} tickLine={false} tick={{fill: '#888ea8', fontSize: 12}} dy={10} />
-                          <YAxis axisLine={false} tickLine={false} tick={{fill: '#888ea8', fontSize: 12}} />
+                          <XAxis dataKey="ticker" axisLine={false} tickLine={false} tick={{fill: '#888ea8', fontSize: 10}} dy={5} />
+                          <YAxis axisLine={false} tickLine={false} tick={{fill: '#888ea8', fontSize: 10}} />
                           <Tooltip 
                             cursor={{fill: '#191e3a'}} 
-                            contentStyle={{backgroundColor: '#060818', borderRadius: '12px', border: '1px solid #191e3a', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.3)'}}
-                            itemStyle={{color: '#bfc9d4'}}
-                            labelStyle={{color: '#fff', fontWeight: 'bold'}}
+                            contentStyle={{backgroundColor: '#060818', borderRadius: '8px', border: '1px solid #191e3a', fontSize: '12px'}}
                           />
-                          <Bar dataKey="volume" fill="#00ab55" radius={[6, 6, 0, 0]} />
+                          <Bar dataKey="volume" fill="#4361ee" radius={[4, 4, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
                   </div>
 
-                  <div className="bg-bg-center p-6 rounded-2xl border border-grid-color shadow-sm text-text-main">
-                    <h3 className="font-bold text-lg text-white mb-6">Índices de Mercado</h3>
-                    <div className="space-y-4">
-                      {data.indices.map((idx) => (
-                        <div key={idx.name} className="flex items-center justify-between p-4 rounded-xl bg-bg-deep border border-grid-color hover:border-accent-blue/30 transition-all cursor-default group">
-                          <div>
-                            <p className="text-text-dim text-xs font-bold uppercase tracking-wider">{idx.name}</p>
-                            <p className="font-bold text-lg text-white">{idx.points.toLocaleString()}</p>
+                  {!isWidget && (
+                    <div className="bg-bg-center p-6 rounded-2xl border border-grid-color shadow-sm text-text-main">
+                      <h3 className="font-bold text-lg text-white mb-6">Índices de Mercado</h3>
+                      <div className="space-y-4">
+                        {data.indices.map((idx) => (
+                          <div key={idx.name} className="flex items-center justify-between p-4 rounded-xl bg-bg-deep border border-grid-color">
+                            <div>
+                              <p className="text-text-dim text-xs font-bold uppercase tracking-wider">{idx.name}</p>
+                              <p className="font-bold text-lg text-white">{idx.points.toLocaleString()}</p>
+                            </div>
+                            <div className={`px-2 py-1 rounded-md flex items-center gap-1 text-sm font-bold ${idx.change >= 0 ? 'text-accent-green bg-accent-green/10' : 'text-red-400 bg-red-400/10'}`}>
+                              {idx.change}%
+                            </div>
                           </div>
-                          <div className={`px-2 py-1 rounded-md flex items-center gap-1 text-sm font-bold ${idx.change >= 0 ? 'text-accent-green bg-accent-green/10' : 'text-red-400 bg-red-400/10'}`}>
-                            {idx.change >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-                            {idx.change}%
-                          </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </motion.div>
             ) : (
@@ -535,25 +498,26 @@ export default function App() {
   );
 }
 
-function StatCard({ label, value, icon, trend, positive, sublabel }: { label: string, value?: string, icon: React.ReactNode, trend?: string, positive?: boolean, sublabel?: string }) {
+function StatCard({ label, value, icon, trend, positive, sublabel, small }: { label: string, value?: string, icon?: React.ReactNode, trend?: string, positive?: boolean, sublabel?: string, small?: boolean }) {
   return (
-    <div className="bg-bg-center p-6 rounded-2xl border border-grid-color shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between mb-4">
-        <div className="p-2.5 bg-bg-deep rounded-xl">
-          {icon}
-        </div>
+    <div className={`bg-bg-center ${small ? 'p-3' : 'p-6'} rounded-2xl border border-grid-color shadow-sm hover:shadow-md transition-shadow`}>
+      <div className={`flex items-center justify-between ${small ? 'mb-2' : 'mb-4'}`}>
+        {!small && (
+          <div className="p-2.5 bg-bg-deep rounded-xl">
+            {icon}
+          </div>
+        )}
         {trend && (
-          <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full ${positive ? 'text-accent-green bg-accent-green/10' : 'text-red-400 bg-red-400/10'}`}>
-            {positive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+          <div className={`flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${positive ? 'text-accent-green bg-accent-green/10' : 'text-red-400 bg-red-400/10'}`}>
             {trend}
           </div>
         )}
       </div>
       <div>
-        <p className="text-text-dim text-xs font-bold uppercase tracking-wider mb-1">{label}</p>
-        <div className="flex items-baseline gap-2">
-          <h4 className="text-2xl font-bold text-white">{value || '---'}</h4>
-          {sublabel && <span className="text-xs text-text-dim font-medium">{sublabel}</span>}
+        <p className="text-text-dim text-[10px] font-bold uppercase tracking-wider mb-1 truncate">{label}</p>
+        <div className="flex items-baseline gap-1">
+          <h4 className={`${small ? 'text-sm' : 'text-2xl'} font-bold text-white truncate`}>{value || '---'}</h4>
+          {sublabel && !small && <span className="text-[10px] text-text-dim font-medium">{sublabel}</span>}
         </div>
       </div>
     </div>
