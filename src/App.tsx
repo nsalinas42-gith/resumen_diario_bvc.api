@@ -171,133 +171,136 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-bg-deep text-text-main font-sans">
-      {/* Sidebar Navigation - Hidden in widget mode */}
+      {/* Top Navigation - Hidden in widget mode */}
       {!isWidget && (
-        <nav className="fixed top-0 left-0 h-screen w-20 md:w-64 bg-bg-center border-r border-grid-color z-50 transition-all duration-300">
-          <div className="p-6">
-            <div className="flex items-center gap-3 mb-10 overflow-hidden">
-              <div className="w-10 h-10 bg-accent-blue rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-accent-blue/20">
-                <TrendingUp className="text-white w-6 h-6" />
+        <nav className="fixed top-0 left-0 w-full h-16 bg-bg-center border-b border-grid-color z-50 px-4 md:px-8 flex items-center justify-between transition-all duration-300">
+          <div className="flex items-center gap-4 md:gap-8 overflow-hidden">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 md:w-10 md:h-10 bg-accent-blue rounded-lg md:rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-accent-blue/20">
+                <TrendingUp className="text-white w-4 h-4 md:w-6 md:h-6" />
               </div>
-              <span className="font-bold text-xl tracking-tight whitespace-nowrap hidden md:block text-white">Resumen BVC</span>
+              <span className="font-bold text-lg md:text-xl tracking-tight whitespace-nowrap text-white">Resumen BVC</span>
             </div>
 
-            <div className="space-y-2">
+            <div className="flex items-center gap-1 md:gap-2">
               <button 
                 onClick={() => setView('dashboard')}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${view === 'dashboard' ? 'bg-accent-blue/10 text-accent-blue' : 'text-text-dim hover:bg-white/5'}`}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${view === 'dashboard' ? 'bg-accent-blue/10 text-accent-blue' : 'text-text-dim hover:bg-white/5'}`}
               >
-                <LayoutDashboard size={22} />
-                <span className="font-medium hidden md:block">Dashboard</span>
+                <LayoutDashboard size={18} />
+                <span className="font-medium text-sm hidden sm:block">Dashboard</span>
               </button>
               <button 
                 onClick={() => setView('spreadsheet')}
-                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${view === 'spreadsheet' ? 'bg-accent-blue/10 text-accent-blue' : 'text-text-dim hover:bg-white/5'}`}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${view === 'spreadsheet' ? 'bg-accent-blue/10 text-accent-blue' : 'text-text-dim hover:bg-white/5'}`}
               >
-                <FileSpreadsheet size={22} />
-                <span className="font-medium hidden md:block">Data Grid</span>
+                <FileSpreadsheet size={18} />
+                <span className="font-medium text-sm hidden sm:block">Data Grid</span>
               </button>
             </div>
+          </div>
 
-            <div className="mt-10 space-y-4">
-              <AnimatePresence>
-                {showAdminPanel ? (
-                  <motion.div 
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="space-y-4 overflow-hidden"
-                  >
-                    <div className="bg-bg-deep p-3 rounded-lg border border-grid-color hidden md:block">
-                      <p className="text-[10px] font-bold text-text-dim uppercase mb-2">SYNC Manual (PDF URL)</p>
-                      <div className="flex gap-1">
-                        <input 
-                          type="text" 
-                          placeholder="https://..." 
-                          className="flex-1 bg-bg-center border border-grid-color rounded p-1 text-[10px] text-text-main focus:outline-none focus:ring-1 focus:ring-accent-blue"
-                          value={syncUrl}
-                          onChange={(e) => setSyncUrl(e.target.value)}
-                        />
-                        <button 
-                          onClick={() => syncWithBVC(syncUrl)}
-                          disabled={!syncUrl || isSyncing}
-                          className="bg-accent-blue text-white p-1 rounded disabled:opacity-50"
-                        >
-                          <ChevronRight size={14} />
-                        </button>
-                      </div>
+          <div className="relative">
+            <AnimatePresence>
+              {showAdminPanel ? (
+                <motion.div 
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  className="absolute right-0 top-12 bg-bg-center border border-grid-color p-4 rounded-xl shadow-2xl space-y-4 min-w-[260px]"
+                >
+                  <div className="bg-bg-deep p-3 rounded-lg border border-grid-color">
+                    <p className="text-[10px] font-bold text-text-dim uppercase mb-2">SYNC Manual (PDF URL)</p>
+                    <div className="flex gap-1">
+                      <input 
+                        type="text" 
+                        placeholder="https://..." 
+                        className="flex-1 bg-bg-center border border-grid-color rounded p-1 text-[10px] text-text-main focus:outline-none focus:ring-1 focus:ring-accent-blue"
+                        value={syncUrl}
+                        onChange={(e) => setSyncUrl(e.target.value)}
+                      />
+                      <button 
+                        onClick={() => syncWithBVC(syncUrl)}
+                        disabled={!syncUrl || isSyncing}
+                        className="bg-accent-blue text-white p-1 rounded disabled:opacity-50"
+                      >
+                        <ChevronRight size={14} />
+                      </button>
                     </div>
+                  </div>
 
+                  <div className="flex flex-col gap-2">
                     <button 
                       onClick={() => syncWithBVC()}
                       disabled={isSyncing}
-                      className="w-full flex items-center gap-3 p-3 rounded-lg bg-accent-blue text-white cursor-pointer hover:bg-accent-blue/90 transition-all shadow-md group disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full flex items-center justify-center gap-2 p-2.5 rounded-lg bg-accent-blue text-white cursor-pointer hover:bg-accent-blue/90 transition-all disabled:opacity-50"
                     >
-                      {isSyncing ? <Loader2 className="animate-spin flex-shrink-0" size={20} /> : <Activity size={20} className="flex-shrink-0 group-hover:animate-pulse" />}
-                      <span className="font-medium text-sm hidden md:block overflow-hidden whitespace-nowrap">Sincronizar BVC</span>
+                      {isSyncing ? <Loader2 className="animate-spin" size={16} /> : <Activity size={16} />}
+                      <span className="font-medium text-xs">Sincronizar BVC</span>
                     </button>
 
-                    <label className="flex items-center gap-3 p-3 rounded-lg bg-accent-purple text-white cursor-pointer hover:bg-accent-purple/90 transition-all shadow-md group">
-                      <Upload size={20} className="flex-shrink-0 group-hover:scale-110 transition-transform" />
-                      <span className="font-medium text-sm hidden md:block overflow-hidden whitespace-nowrap">Subir Captura</span>
+                    <label className="flex items-center justify-center gap-2 p-2.5 rounded-lg bg-accent-purple text-white cursor-pointer hover:bg-accent-purple/90 transition-all">
+                      <Upload size={16} />
+                      <span className="font-medium text-xs">Subir Captura</span>
                       <input type="file" multiple className="hidden" onChange={handleFileUpload} accept="image/*" />
                     </label>
+                  </div>
 
-                    <button 
-                      onClick={() => setShowAdminPanel(false)}
-                      className="w-full py-2 text-[10px] font-bold text-text-dim hover:text-text-main transition-colors uppercase"
-                    >
-                      Cerrar Panel
-                    </button>
-                  </motion.div>
-                ) : isAuthenticating ? (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="bg-bg-center p-4 rounded-xl border border-grid-color shadow-xl"
-                  >
-                    <p className="text-[10px] font-bold text-text-dim uppercase mb-2">Ingrese Contraseña</p>
-                    <div className="flex gap-1">
-                      <input 
-                        type="password" 
-                        placeholder="****" 
-                        autoFocus
-                        className="flex-1 bg-bg-deep border border-grid-color rounded p-2 text-sm text-text-main focus:outline-none focus:ring-1 focus:ring-accent-blue"
-                        value={passwordInput}
-                        onChange={(e) => setPasswordInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleVerifyPassword()}
-                      />
-                      <button 
-                        onClick={handleVerifyPassword}
-                        className="bg-accent-blue text-white px-3 rounded"
-                      >
-                        <ChevronRight size={16} />
-                      </button>
-                    </div>
-                    <button 
-                      onClick={() => setIsAuthenticating(false)}
-                      className="w-full mt-2 text-[10px] text-text-dim hover:text-text-main font-bold uppercase transition-colors"
-                    >
-                      Cancelar
-                    </button>
-                  </motion.div>
-                ) : (
                   <button 
-                    onClick={() => setIsAuthenticating(true)}
-                    className="w-full flex items-center justify-center gap-2 p-3 rounded-lg border-2 border-dashed border-grid-color text-text-dim hover:border-accent-blue/50 hover:text-accent-blue transition-all font-bold text-xs uppercase"
+                    onClick={() => setShowAdminPanel(false)}
+                    className="w-full py-2 text-[10px] font-bold text-text-dim hover:text-text-main transition-colors uppercase border-t border-grid-color"
                   >
-                    <Activity size={16} />
-                    <span className="hidden md:inline">Actualización de Datos BVC</span>
+                    Cerrar Panel
                   </button>
-                )}
-              </AnimatePresence>
-            </div>
+                </motion.div>
+              ) : isAuthenticating ? (
+                <motion.div
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  className="absolute right-0 top-12 bg-bg-center p-4 rounded-xl border border-grid-color shadow-2xl min-w-[200px]"
+                >
+                  <p className="text-[10px] font-bold text-text-dim uppercase mb-2">Clave Actualización</p>
+                  <div className="flex gap-1">
+                    <input 
+                      type="password" 
+                      placeholder="****" 
+                      autoFocus
+                      className="flex-1 bg-bg-deep border border-grid-color rounded p-2 text-xs text-text-main focus:outline-none focus:ring-1 focus:ring-accent-blue"
+                      value={passwordInput}
+                      onChange={(e) => setPasswordInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleVerifyPassword()}
+                    />
+                    <button 
+                      onClick={handleVerifyPassword}
+                      className="bg-accent-blue text-white px-2 rounded"
+                    >
+                      <ChevronRight size={14} />
+                    </button>
+                  </div>
+                  <button 
+                    onClick={() => setIsAuthenticating(false)}
+                    className="w-full mt-2 text-[10px] text-text-dim hover:text-text-main font-bold uppercase transition-colors"
+                  >
+                    Cerrar
+                  </button>
+                </motion.div>
+              ) : (
+                <button 
+                  onClick={() => setIsAuthenticating(true)}
+                  className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border-2 border-dashed border-grid-color text-text-dim hover:border-accent-blue/50 hover:text-accent-blue transition-all"
+                >
+                  <Activity size={18} />
+                  <span className="hidden sm:inline font-bold text-[10px] uppercase whitespace-nowrap">Actualización BVC</span>
+                </button>
+              )}
+            </AnimatePresence>
           </div>
         </nav>
       )}
 
       {/* Main Content */}
-      <main className={`${isWidget ? 'pl-0 bg-transparent' : 'pl-20 md:pl-64'} ${isWidget ? 'pt-2' : 'pt-6'} transition-all duration-300`}>
+      <main className={`${isWidget ? 'pl-0 bg-transparent pt-2' : 'pt-24'} transition-all duration-300`}>
         <div className={`${isWidget ? 'max-w-full px-2' : 'max-w-7xl mx-auto px-4 md:px-8'} pb-6`}>
           {/* Header */}
           <header className={`flex items-center justify-between ${isWidget ? 'mb-4' : 'mb-8'} gap-4`}>
