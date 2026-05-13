@@ -64,6 +64,10 @@ export default function App() {
     }
   };
 
+  const isWidget = useMemo(() => {
+    return new URLSearchParams(window.location.search).get('mode') === 'widget';
+  }, []);
+
   const syncWithBVC = async (customUrl?: string) => {
     setIsSyncing(true);
     setIsProcessing(true);
@@ -167,138 +171,200 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-bg-deep text-text-main font-sans">
-      {/* Sidebar Navigation */}
-      <nav className="fixed top-0 left-0 h-screen w-20 md:w-64 bg-bg-center border-r border-grid-color z-50 transition-all duration-300">
-        <div className="p-6">
-          <div className="flex items-center gap-3 mb-10 overflow-hidden">
-            <div className="w-10 h-10 bg-accent-blue rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-accent-blue/20">
-              <TrendingUp className="text-white w-6 h-6" />
+      {/* Sidebar Navigation - Hidden in widget mode */}
+      {!isWidget && (
+        <nav className="fixed top-0 left-0 h-screen w-20 md:w-64 bg-bg-center border-r border-grid-color z-50 transition-all duration-300">
+          <div className="p-6">
+            <div className="flex items-center gap-3 mb-10 overflow-hidden">
+              <div className="w-10 h-10 bg-accent-blue rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-accent-blue/20">
+                <TrendingUp className="text-white w-6 h-6" />
+              </div>
+              <span className="font-bold text-xl tracking-tight whitespace-nowrap hidden md:block text-white">Resumen BVC</span>
             </div>
-            <span className="font-bold text-xl tracking-tight whitespace-nowrap hidden md:block text-white">Resumen BVC</span>
-          </div>
 
-          <div className="space-y-2">
-            <button 
-              onClick={() => setView('dashboard')}
-              className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${view === 'dashboard' ? 'bg-accent-blue/10 text-accent-blue' : 'text-text-dim hover:bg-white/5'}`}
-            >
-              <LayoutDashboard size={22} />
-              <span className="font-medium hidden md:block">Dashboard</span>
-            </button>
-            <button 
-              onClick={() => setView('spreadsheet')}
-              className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${view === 'spreadsheet' ? 'bg-accent-blue/10 text-accent-blue' : 'text-text-dim hover:bg-white/5'}`}
-            >
-              <FileSpreadsheet size={22} />
-              <span className="font-medium hidden md:block">Data Grid</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="absolute bottom-6 left-0 w-full px-6 space-y-4">
-          <AnimatePresence>
-            {showAdminPanel ? (
-              <motion.div 
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="space-y-4 overflow-hidden"
+            <div className="space-y-2">
+              <button 
+                onClick={() => setView('dashboard')}
+                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${view === 'dashboard' ? 'bg-accent-blue/10 text-accent-blue' : 'text-text-dim hover:bg-white/5'}`}
               >
-                <div className="bg-bg-deep p-3 rounded-lg border border-grid-color hidden md:block">
-                  <p className="text-[10px] font-bold text-text-dim uppercase mb-2">SYNC Manual (PDF URL)</p>
+                <LayoutDashboard size={22} />
+                <span className="font-medium hidden md:block">Dashboard</span>
+              </button>
+              <button 
+                onClick={() => setView('spreadsheet')}
+                className={`w-full flex items-center gap-3 p-3 rounded-lg transition-all ${view === 'spreadsheet' ? 'bg-accent-blue/10 text-accent-blue' : 'text-text-dim hover:bg-white/5'}`}
+              >
+                <FileSpreadsheet size={22} />
+                <span className="font-medium hidden md:block">Data Grid</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="absolute bottom-6 left-0 w-full px-6 space-y-4">
+            <AnimatePresence>
+              {showAdminPanel ? (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="space-y-4 overflow-hidden"
+                >
+                  <div className="bg-bg-deep p-3 rounded-lg border border-grid-color hidden md:block">
+                    <p className="text-[10px] font-bold text-text-dim uppercase mb-2">SYNC Manual (PDF URL)</p>
+                    <div className="flex gap-1">
+                      <input 
+                        type="text" 
+                        placeholder="https://..." 
+                        className="flex-1 bg-bg-center border border-grid-color rounded p-1 text-[10px] text-text-main focus:outline-none focus:ring-1 focus:ring-accent-blue"
+                        value={syncUrl}
+                        onChange={(e) => setSyncUrl(e.target.value)}
+                      />
+                      <button 
+                        onClick={() => syncWithBVC(syncUrl)}
+                        disabled={!syncUrl || isSyncing}
+                        className="bg-accent-blue text-white p-1 rounded disabled:opacity-50"
+                      >
+                        <ChevronRight size={14} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <button 
+                    onClick={() => syncWithBVC()}
+                    disabled={isSyncing}
+                    className="w-full flex items-center gap-3 p-3 rounded-lg bg-accent-blue text-white cursor-pointer hover:bg-accent-blue/90 transition-all shadow-md group disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSyncing ? <Loader2 className="animate-spin flex-shrink-0" size={20} /> : <Activity size={20} className="flex-shrink-0 group-hover:animate-pulse" />}
+                    <span className="font-medium text-sm hidden md:block overflow-hidden whitespace-nowrap">Sincronizar BVC</span>
+                  </button>
+
+                  <label className="flex items-center gap-3 p-3 rounded-lg bg-accent-purple text-white cursor-pointer hover:bg-accent-purple/90 transition-all shadow-md group">
+                    <Upload size={20} className="flex-shrink-0 group-hover:scale-110 transition-transform" />
+                    <span className="font-medium text-sm hidden md:block overflow-hidden whitespace-nowrap">Subir Captura</span>
+                    <input type="file" multiple className="hidden" onChange={handleFileUpload} accept="image/*" />
+                  </label>
+
+                  <button 
+                    onClick={() => setShowAdminPanel(false)}
+                    className="w-full py-2 text-[10px] font-bold text-text-dim hover:text-text-main transition-colors uppercase"
+                  >
+                    Cerrar Panel
+                  </button>
+                </motion.div>
+              ) : isAuthenticating ? (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-bg-center p-4 rounded-xl border border-grid-color shadow-xl"
+                >
+                  <p className="text-[10px] font-bold text-text-dim uppercase mb-2">Ingrese Contraseña</p>
                   <div className="flex gap-1">
                     <input 
-                      type="text" 
-                      placeholder="https://..." 
-                      className="flex-1 bg-bg-center border border-grid-color rounded p-1 text-[10px] text-text-main focus:outline-none focus:ring-1 focus:ring-accent-blue"
-                      value={syncUrl}
-                      onChange={(e) => setSyncUrl(e.target.value)}
+                      type="password" 
+                      placeholder="****" 
+                      autoFocus
+                      className="flex-1 bg-bg-deep border border-grid-color rounded p-2 text-sm text-text-main focus:outline-none focus:ring-1 focus:ring-accent-blue"
+                      value={passwordInput}
+                      onChange={(e) => setPasswordInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleVerifyPassword()}
                     />
                     <button 
-                      onClick={() => syncWithBVC(syncUrl)}
-                      disabled={!syncUrl || isSyncing}
-                      className="bg-accent-blue text-white p-1 rounded disabled:opacity-50"
+                      onClick={handleVerifyPassword}
+                      className="bg-accent-blue text-white px-3 rounded"
                     >
-                      <ChevronRight size={14} />
+                      <ChevronRight size={16} />
                     </button>
                   </div>
-                </div>
-
-                <button 
-                  onClick={() => syncWithBVC()}
-                  disabled={isSyncing}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg bg-accent-blue text-white cursor-pointer hover:bg-accent-blue/90 transition-all shadow-md group disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSyncing ? <Loader2 className="animate-spin flex-shrink-0" size={20} /> : <Activity size={20} className="flex-shrink-0 group-hover:animate-pulse" />}
-                  <span className="font-medium text-sm hidden md:block overflow-hidden whitespace-nowrap">Sincronizar BVC</span>
-                </button>
-
-                <label className="flex items-center gap-3 p-3 rounded-lg bg-accent-purple text-white cursor-pointer hover:bg-accent-purple/90 transition-all shadow-md group">
-                  <Upload size={20} className="flex-shrink-0 group-hover:scale-110 transition-transform" />
-                  <span className="font-medium text-sm hidden md:block overflow-hidden whitespace-nowrap">Subir Captura</span>
-                  <input type="file" multiple className="hidden" onChange={handleFileUpload} accept="image/*" />
-                </label>
-
-                <button 
-                  onClick={() => setShowAdminPanel(false)}
-                  className="w-full py-2 text-[10px] font-bold text-text-dim hover:text-text-main transition-colors uppercase"
-                >
-                  Cerrar Panel
-                </button>
-              </motion.div>
-            ) : isAuthenticating ? (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="bg-bg-center p-4 rounded-xl border border-grid-color shadow-xl"
-              >
-                <p className="text-[10px] font-bold text-text-dim uppercase mb-2">Ingrese Contraseña</p>
-                <div className="flex gap-1">
-                  <input 
-                    type="password" 
-                    placeholder="****" 
-                    autoFocus
-                    className="flex-1 bg-bg-deep border border-grid-color rounded p-2 text-sm text-text-main focus:outline-none focus:ring-1 focus:ring-accent-blue"
-                    value={passwordInput}
-                    onChange={(e) => setPasswordInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleVerifyPassword()}
-                  />
                   <button 
-                    onClick={handleVerifyPassword}
-                    className="bg-accent-blue text-white px-3 rounded"
+                    onClick={() => setIsAuthenticating(false)}
+                    className="w-full mt-2 text-[10px] text-text-dim hover:text-text-main font-bold uppercase transition-colors"
                   >
-                    <ChevronRight size={16} />
+                    Cancelar
                   </button>
-                </div>
+                </motion.div>
+              ) : (
                 <button 
-                  onClick={() => setIsAuthenticating(false)}
-                  className="w-full mt-2 text-[10px] text-text-dim hover:text-text-main font-bold uppercase transition-colors"
+                  onClick={() => setIsAuthenticating(true)}
+                  className="w-full flex items-center justify-center gap-2 p-3 rounded-lg border-2 border-dashed border-grid-color text-text-dim hover:border-accent-blue/50 hover:text-accent-blue transition-all font-bold text-xs uppercase"
                 >
-                  Cancelar
+                  <Activity size={16} />
+                  <span className="hidden md:inline">Actualización BVC</span>
                 </button>
-              </motion.div>
-            ) : (
-              <button 
-                onClick={() => setIsAuthenticating(true)}
-                className="w-full flex items-center justify-center gap-2 p-3 rounded-lg border-2 border-dashed border-grid-color text-text-dim hover:border-accent-blue/50 hover:text-accent-blue transition-all font-bold text-xs uppercase"
-              >
-                <Activity size={16} />
-                <span className="hidden md:inline">Actualización BVC</span>
-              </button>
-            )}
-          </AnimatePresence>
-        </div>
-      </nav>
+              )}
+            </AnimatePresence>
+          </div>
+        </nav>
+      )}
 
       {/* Main Content */}
-      <main className="pl-20 md:pl-64 pt-6 transition-all duration-300">
+      <main className={`${isWidget ? 'pl-0' : 'pl-20 md:pl-64'} pt-6 transition-all duration-300`}>
         <div className="max-w-7xl mx-auto px-4 md:px-8 pb-12">
           {/* Header */}
           <header className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-white leading-tight">Mercado de Valores</h1>
-              <p className="text-text-dim font-medium">Bolsa de Valores de Caracas &bull; {data.summary?.date || 'Cargando...'}</p>
+            <div className="flex items-center gap-4">
+              {isWidget && (
+                <div className="w-10 h-10 bg-accent-blue rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-accent-blue/20">
+                  <TrendingUp className="text-white w-6 h-6" />
+                </div>
+              )}
+              <div>
+                <h1 className={`${isWidget ? 'text-2xl' : 'text-3xl'} font-bold text-white leading-tight`}>
+                  {isWidget ? 'Resumen BVC' : 'Mercado de Valores'}
+                </h1>
+                <p className="text-text-dim font-medium">Bolsa de Valores de Caracas &bull; {data.summary?.date || 'Cargando...'}</p>
+              </div>
             </div>
+
+            {isWidget && (
+              <div className="flex items-center gap-2">
+                <AnimatePresence mode="wait">
+                  {showAdminPanel ? (
+                    <motion.div 
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      className="bg-bg-center p-2 rounded-lg border border-grid-color flex items-center gap-3"
+                    >
+                      <button onClick={() => syncWithBVC()} className="p-1.5 text-accent-blue hover:bg-white/5 rounded-md transition-colors" title="Sync manual">
+                        <Activity size={16} />
+                      </button>
+                      <label className="p-1.5 text-accent-purple hover:bg-white/5 rounded-md transition-colors cursor-pointer" title="Subir captura">
+                        <Upload size={16} />
+                        <input type="file" multiple className="hidden" onChange={handleFileUpload} accept="image/*" />
+                      </label>
+                      <button onClick={() => setShowAdminPanel(false)} className="p-1.5 text-text-dim hover:text-white" title="Cerrar">
+                        <ChevronRight size={16} className="rotate-90" />
+                      </button>
+                    </motion.div>
+                  ) : isAuthenticating ? (
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="flex gap-1"
+                    >
+                      <input 
+                        type="password" 
+                        placeholder="Clave"
+                        autoFocus
+                        className="w-24 bg-bg-center border border-grid-color rounded px-2 py-1 text-xs text-white focus:outline-none focus:ring-1 focus:ring-accent-blue"
+                        value={passwordInput}
+                        onChange={(e) => setPasswordInput(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleVerifyPassword()}
+                      />
+                      <button onClick={() => setIsAuthenticating(false)} className="text-text-dim p-1">X</button>
+                    </motion.div>
+                  ) : (
+                    <button 
+                      onClick={() => setIsAuthenticating(true)}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-grid-color text-text-dim hover:text-accent-blue transition-colors text-xs font-bold uppercase"
+                    >
+                      <Activity size={14} />
+                      Actualizar
+                    </button>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
           </header>
 
           {isProcessing && (
