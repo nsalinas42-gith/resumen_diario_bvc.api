@@ -367,7 +367,7 @@ export default function App() {
                 className={`${isWidget ? 'space-y-4' : 'space-y-8'}`}
               >
                 {/* Stats Grid */}
-                <div className={`grid grid-cols-2 ${isWidget ? 'lg:grid-cols-2' : 'lg:grid-cols-4'} gap-4`}>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
                   <StatCard 
                     label="Vol. Bs" 
                     value={data.summary?.totalVolumeBs.toLocaleString()} 
@@ -397,10 +397,10 @@ export default function App() {
                 </div>
 
                 {/* Charts Row */}
-                <div className={`grid grid-cols-1 ${!isWidget ? 'lg:grid-cols-3' : ''} gap-4`}>
-                  <div className={`${!isWidget ? 'lg:col-span-2' : ''} bg-bg-center ${isWidget ? 'p-4' : 'p-6'} rounded-2xl border border-grid-color shadow-sm`}>
-                    <h3 className={`font-bold ${isWidget ? 'text-xs uppercase tracking-wider mb-4' : 'text-lg mb-6'} text-white`}>Top Volumen</h3>
-                    <div className={`${isWidget ? 'h-[180px]' : 'h-[300px]'} w-full`}>
+                <div className={`grid grid-cols-1 ${isWidget ? 'md:grid-cols-2 lg:grid-cols-3' : 'lg:grid-cols-3'} gap-4`}>
+                  <div className={`${isWidget ? 'lg:col-span-2' : 'lg:col-span-2'} bg-bg-center ${isWidget ? 'p-4' : 'p-6'} rounded-2xl border border-grid-color shadow-sm`}>
+                    <h3 className={`font-bold ${isWidget ? 'text-[10px] uppercase tracking-wider mb-4' : 'text-lg mb-6'} text-white`}>Top Volumen</h3>
+                    <div className={`${isWidget ? 'h-[200px]' : 'h-[300px]'} w-full`}>
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={data.summary?.topVolumeActions.slice(0, 5)}>
                           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#191e3a" />
@@ -408,7 +408,7 @@ export default function App() {
                           <YAxis axisLine={false} tickLine={false} tick={{fill: '#888ea8', fontSize: 10}} />
                           <Tooltip 
                             cursor={{fill: '#191e3a'}} 
-                            contentStyle={{backgroundColor: '#060818', borderRadius: '8px', border: '1px solid #191e3a', fontSize: '12px'}}
+                            contentStyle={{backgroundColor: '#060818', borderRadius: '8px', border: '1px solid #191e3a', fontSize: '11px'}}
                           />
                           <Bar dataKey="volume" fill="#4361ee" radius={[4, 4, 0, 0]} />
                         </BarChart>
@@ -416,25 +416,24 @@ export default function App() {
                     </div>
                   </div>
 
-                  {!isWidget && (
-                    <div className="bg-bg-center p-6 rounded-2xl border border-grid-color shadow-sm text-text-main">
-                      <h3 className="font-bold text-lg text-white mb-6">Índices de Mercado</h3>
-                      <div className="space-y-4">
-                        {data.indices.map((idx) => (
-                          <div key={idx.name} className="flex items-center justify-between p-4 rounded-xl bg-bg-deep border border-grid-color">
-                            <div>
-                              <p className="text-text-dim text-xs font-bold uppercase tracking-wider">{idx.name}</p>
-                              <p className="font-bold text-lg text-white">{idx.points.toLocaleString()}</p>
-                            </div>
-                            <div className={`px-2 py-1 rounded-md flex items-center gap-1 text-sm font-bold ${idx.change >= 0 ? 'text-accent-green bg-accent-green/10' : 'text-red-400 bg-red-400/10'}`}>
-                              {idx.change}%
-                            </div>
+                  <div className={`bg-bg-center ${isWidget ? 'p-4' : 'p-6'} rounded-2xl border border-grid-color shadow-sm text-text-main`}>
+                    <h3 className={`font-bold ${isWidget ? 'text-[10px] uppercase tracking-wider mb-4' : 'text-lg mb-6'} text-white`}>Índices de Mercado</h3>
+                    <div className={`${isWidget ? 'space-y-2' : 'space-y-4'}`}>
+                      {data.indices.map((idx) => (
+                        <div key={idx.name} className={`flex items-center justify-between ${isWidget ? 'p-2' : 'p-4'} rounded-xl bg-bg-deep border border-grid-color`}>
+                          <div>
+                            <p className="text-text-dim text-[10px] font-bold uppercase tracking-wider">{idx.name}</p>
+                            <p className={`${isWidget ? 'text-sm' : 'text-lg'} font-bold text-white`}>{idx.points.toLocaleString()}</p>
                           </div>
-                        ))}
-                      </div>
+                          <div className={`${isWidget ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-1 text-sm'} rounded-md flex items-center gap-1 font-bold ${idx.change >= 0 ? 'text-accent-green bg-accent-green/10' : 'text-red-400 bg-red-400/10'}`}>
+                            {idx.change}%
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  )}
+                  </div>
                 </div>
+
               </motion.div>
             ) : (
               <motion.div 
