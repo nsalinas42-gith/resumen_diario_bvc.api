@@ -301,7 +301,7 @@ export default function App() {
 
       {/* Main Content */}
       <main className={`${isWidget ? 'pl-0 bg-transparent pt-2' : 'pt-24'} transition-all duration-300`}>
-        <div className={`${isWidget ? 'max-w-full px-2' : 'max-w-7xl mx-auto px-4 md:px-8'} pb-6`}>
+        <div className={`${isWidget ? 'max-w-full px-2 pb-10' : 'max-w-7xl mx-auto px-4 md:px-8 pb-12'}`}>
           {/* Header */}
           <header className={`flex items-center justify-between ${isWidget ? 'mb-4' : 'mb-8'} gap-4`}>
             <div className="flex items-center gap-3">
