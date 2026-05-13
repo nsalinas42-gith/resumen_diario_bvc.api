@@ -1,0 +1,6 @@
+{
+  "name": "Resumen BVC",
+  "description": "Dashboard interactivo para la visualización y análisis de datos de la Bolsa de Valores de Caracas extraídos de reportes diarios.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
