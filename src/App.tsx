@@ -368,21 +368,25 @@ export default function App() {
                   <StatCard 
                     label="Vol. Bs" 
                     value={data.summary?.totalVolumeBs.toLocaleString()} 
+                    icon={<Activity className="text-accent-blue" />}
                     small={isWidget}
                   />
                   <StatCard 
                     label="Vol. USD" 
                     value={`$${data.summary?.totalVolumeUsd.toLocaleString()}`} 
+                    icon={<DollarSign className="text-accent-green" />}
                     small={isWidget}
                   />
                   <StatCard 
                     label="Tasa SMC" 
                     value={data.summary?.dollarRate.toFixed(4)} 
+                    icon={<ArrowRightLeft className="text-orange-400" />}
                     small={isWidget}
                   />
                   <StatCard 
                     label="IBC" 
                     value={data.indices.find(i => i.name === 'IBC')?.points.toLocaleString()} 
+                    icon={<TrendingUp className="text-accent-purple" />}
                     trend={`${data.indices.find(i => i.name === 'IBC')?.change}%`}
                     positive={(data.indices.find(i => i.name === 'IBC')?.change || 0) > 0}
                     small={isWidget}
@@ -502,11 +506,9 @@ function StatCard({ label, value, icon, trend, positive, sublabel, small }: { la
   return (
     <div className={`bg-bg-center ${small ? 'p-3' : 'p-6'} rounded-2xl border border-grid-color shadow-sm hover:shadow-md transition-shadow`}>
       <div className={`flex items-center justify-between ${small ? 'mb-2' : 'mb-4'}`}>
-        {!small && (
-          <div className="p-2.5 bg-bg-deep rounded-xl">
-            {icon}
-          </div>
-        )}
+        <div className={`${small ? 'p-1.5' : 'p-2.5'} bg-bg-deep rounded-xl`}>
+          {icon}
+        </div>
         {trend && (
           <div className={`flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${positive ? 'text-accent-green bg-accent-green/10' : 'text-red-400 bg-red-400/10'}`}>
             {trend}
