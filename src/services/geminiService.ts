@@ -147,10 +147,10 @@ export const INITIAL_DATA: DashboardState = {
     { ticker: "CRM.A", name: "Corimon", action: "ACCION", closeBs: 579.00, changeBs: 0.00, closeUsd: 1.1467, changeUsd: -0.88 },
   ],
   indices: [
-    { name: "Industrial", points: 2166.68, change: -0.31 },
-    { name: "Financiero", points: 10907.64, change: -1.25 },
-    { name: "IBC", points: 5625.33, change: -1.07 },
-    { name: "Rendivalores", points: 20477.06, change: 0.82 },
+    { name: "Industrial", points: 2166.68, change: -0.31, history: [2200, 2180, 2190, 2170, 2175, 2166] },
+    { name: "Financiero", points: 10907.64, change: -1.25, history: [11200, 11100, 11150, 11000, 10950, 10907] },
+    { name: "IBC", points: 5625.33, change: -1.07, history: [5800, 5750, 5700, 5720, 5680, 5625] },
+    { name: "Rendivalores", points: 20477.06, change: 0.82, history: [20100, 20200, 20150, 20300, 20400, 20477] },
   ],
   summary: {
     date: "12 de mayo del 2026",

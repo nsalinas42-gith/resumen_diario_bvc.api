@@ -13,6 +13,7 @@ export interface IndexData {
   name: string;
   points: number;
   change: number;
+  history?: number[];
 }
 
 export interface MarketSummary {

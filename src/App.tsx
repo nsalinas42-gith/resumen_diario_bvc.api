@@ -6,7 +6,7 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  LineChart, Line, PieChart, Pie, Cell 
+  LineChart, Line, AreaChart, Area, PieChart, Pie, Cell 
 } from 'recharts';
 import { 
   Download, 
@@ -408,6 +408,16 @@ export default function App() {
                             <p className="text-text-dim text-[10px] font-bold uppercase tracking-wider">{idx.name}</p>
                             <p className={`${isWidget ? 'text-sm' : 'text-lg'} font-bold text-white`}>{idx.points.toLocaleString()}</p>
                           </div>
+                          
+                          {idx.history && (
+                            <div className="hidden sm:block">
+                              <Sparkline 
+                                data={idx.history} 
+                                color={idx.change >= 0 ? '#10b981' : '#f87171'} 
+                              />
+                            </div>
+                          )}
+
                           <div className={`${isWidget ? 'px-1.5 py-0.5 text-[10px]' : 'px-2 py-1 text-sm'} rounded-md flex items-center gap-1 font-bold ${idx.change >= 0 ? 'text-accent-green bg-accent-green/10' : 'text-red-400 bg-red-400/10'}`}>
                             {idx.change}%
                           </div>
@@ -502,6 +512,37 @@ export default function App() {
           </AnimatePresence>
         </div>
       </main>
+    </div>
+  );
+}
+
+function Sparkline({ data, color }: { data: number[], color: string }) {
+  const chartData = data.map((val, i) => ({ value: val, index: i }));
+  const id = React.useId().replace(/:/g, '');
+  
+  return (
+    <div className="h-10 w-20 md:w-28 opacity-80">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={chartData}>
+          <defs>
+            <linearGradient id={`gradient-${id}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor={color} stopOpacity={0.4}/>
+              <stop offset="95%" stopColor={color} stopOpacity={0}/>
+            </linearGradient>
+          </defs>
+          <YAxis hide domain={['dataMin', 'dataMax']} />
+          <Area 
+            type="monotone" 
+            dataKey="value" 
+            stroke={color} 
+            strokeWidth={2}
+            fillOpacity={1} 
+            fill={`url(#gradient-${id})`}
+            dot={false} 
+            isAnimationActive={false}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
     </div>
   );
 }
