@@ -512,9 +512,9 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                    <thead className="bg-bg-deep/30">
+                <div className="overflow-x-auto max-h-[530px] overflow-y-auto scrollbar-thin scrollbar-thumb-accent-blue/20">
+                  <table className="w-full text-left border-separate border-spacing-0">
+                    <thead className="bg-bg-deep sticky top-0 z-10 shadow-sm transition-all duration-200">
                       <tr>
                         <SortableHeader label="Ticker" sortKey="ticker" currentSort={sortConfig} onSort={requestSort} />
                         <SortableHeader label="Empresa" sortKey="name" currentSort={sortConfig} onSort={requestSort} />
