@@ -17,12 +17,15 @@ import {
   TrendingDown, 
   DollarSign, 
   Activity,
+  FileUp,
   FileText,
   Search,
   Filter,
   ArrowRightLeft,
   ChevronRight,
-  Loader2
+  Loader2,
+  Menu,
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { INITIAL_DATA } from './initialData';
@@ -44,6 +47,7 @@ export default function App() {
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     // Listen for real-time updates from Firestore
@@ -247,6 +251,7 @@ export default function App() {
     <div className="min-h-screen bg-bg-deep text-text-main font-sans">
       {/* Top Navigation - Hidden in widget mode */}
       {!isWidget && (
+        <>
         <nav className="fixed top-0 left-0 w-full h-16 bg-bg-center border-b border-grid-color z-50 px-4 md:px-8 flex items-center justify-between transition-all duration-300">
           <div className="flex items-center gap-4 md:gap-8 overflow-hidden">
             <div className="flex items-center gap-3">
@@ -254,141 +259,285 @@ export default function App() {
                 <TrendingUp className="text-white w-4 h-4 md:w-6 md:h-6" />
               </div>
               <span className="font-bold text-lg md:text-xl tracking-tight whitespace-nowrap text-white">Resumen BVC</span>
-              {isLoadingPersistence ? (
-                <div className="flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 text-accent-blue animate-spin" />
-                  <span className="text-[10px] text-text-dim">Sincronizando nube...</span>
-                </div>
-              ) : (
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-accent-blue animate-pulse" />
-                    <span className="text-[10px] text-accent-blue font-medium uppercase tracking-wider">Nube Conectada</span>
+              
+              {/* Desktop Status */}
+              <div className="hidden lg:flex items-center gap-3">
+                {isLoadingPersistence ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 text-accent-blue animate-spin" />
+                    <span className="text-[10px] text-text-dim">Log de cambios...</span>
                   </div>
-                  {data.lastUpdated && (
-                    <span className="text-[10px] text-text-dim leading-tight hidden sm:block">
-                      Dato: {new Date(data.lastUpdated).toLocaleTimeString()}
-                    </span>
-                  )}
-                </div>
-              )}
+                ) : (
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-accent-blue animate-pulse" />
+                      <span className="text-[10px] text-accent-blue font-medium uppercase tracking-wider text-xs">Nube Conectada</span>
+                    </div>
+                    {data.lastUpdated && (
+                      <span className="text-[10px] text-text-dim leading-tight hidden sm:block">
+                        Sinc: {new Date(data.lastUpdated).toLocaleTimeString()}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="flex items-center gap-1 md:gap-2">
+            {/* Desktop Navigation Links */}
+            <div className="hidden md:flex items-center gap-1 md:gap-2">
               <button 
                 onClick={() => setView('dashboard')}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${view === 'dashboard' ? 'bg-accent-blue/10 text-accent-blue' : 'text-text-dim hover:bg-white/5'}`}
               >
                 <LayoutDashboard size={18} />
-                <span className="font-medium text-sm hidden sm:block">Dashboard</span>
+                <span className="font-medium text-sm">Dashboard</span>
               </button>
               <button 
                 onClick={() => setView('spreadsheet')}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${view === 'spreadsheet' ? 'bg-accent-blue/10 text-accent-blue' : 'text-text-dim hover:bg-white/5'}`}
               >
                 <FileSpreadsheet size={18} />
-                <span className="font-medium text-sm hidden sm:block">Data Grid</span>
+                <span className="font-medium text-sm">Data Grid</span>
               </button>
             </div>
           </div>
 
-          <div className="relative">
-            <AnimatePresence>
-              {showAdminPanel ? (
-                <motion.div 
-                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                  className="absolute right-0 top-12 bg-bg-center border border-grid-color p-4 rounded-xl shadow-2xl space-y-4 min-w-[260px]"
-                >
-                  <div className="bg-bg-deep p-3 rounded-lg border border-grid-color">
-                    <p className="text-[10px] font-bold text-text-dim uppercase mb-2">SYNC Manual (PDF URL)</p>
+          <div className="flex items-center gap-2">
+            {/* Desktop Admin Panel */}
+            <div className="hidden md:block relative">
+              <AnimatePresence>
+                {showAdminPanel ? (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    className="absolute right-0 top-12 bg-bg-center border border-grid-color p-4 rounded-xl shadow-2xl space-y-4 min-w-[260px]"
+                  >
+                    <div className="bg-bg-deep p-3 rounded-lg border border-grid-color">
+                      <p className="text-[10px] font-bold text-text-dim uppercase mb-2">SYNC Manual (PDF URL)</p>
+                      <div className="flex gap-1">
+                        <input 
+                          type="text" 
+                          placeholder="https://..." 
+                          className="flex-1 bg-bg-center border border-grid-color rounded p-1 text-[10px] text-text-main focus:outline-none focus:ring-1 focus:ring-accent-blue"
+                          value={syncUrl}
+                          onChange={(e) => setSyncUrl(e.target.value)}
+                        />
+                        <button 
+                          onClick={() => syncWithBVC(syncUrl)}
+                          disabled={!syncUrl || isSyncing}
+                          className="bg-accent-blue text-white p-1 rounded disabled:opacity-50"
+                        >
+                          {isSyncing ? <Loader2 className="animate-spin" size={14} /> : <ChevronRight size={14} />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <button 
+                        onClick={() => syncWithBVC()}
+                        disabled={isSyncing}
+                        className="w-full flex items-center justify-center gap-2 p-2.5 rounded-lg bg-accent-blue text-white cursor-pointer hover:bg-accent-blue/90 transition-all disabled:opacity-50"
+                      >
+                        {isSyncing ? <Loader2 className="animate-spin" size={16} /> : <Activity size={16} />}
+                        <span className="font-medium text-xs">Sincronizar BVC</span>
+                      </button>
+
+                      <label className="flex items-center justify-center gap-2 p-2.5 rounded-lg bg-accent-purple text-white cursor-pointer hover:bg-accent-purple/90 transition-all">
+                        <Upload size={16} />
+                        <span className="font-medium text-xs">Subir PDF BVC</span>
+                        <input type="file" className="hidden" onChange={handleFileUpload} accept=".pdf,application/pdf" />
+                      </label>
+                    </div>
+
+                    <button 
+                      onClick={() => setShowAdminPanel(false)}
+                      className="w-full py-2 text-[10px] font-bold text-text-dim hover:text-text-main transition-colors uppercase border-t border-grid-color"
+                    >
+                      Cerrar Panel
+                    </button>
+                  </motion.div>
+                ) : isAuthenticating ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    className="absolute right-0 top-12 bg-bg-center p-4 rounded-xl border border-grid-color shadow-2xl min-w-[200px]"
+                  >
+                    <p className="text-[10px] font-bold text-text-dim uppercase mb-2">Clave Actualización</p>
                     <div className="flex gap-1">
                       <input 
-                        type="text" 
-                        placeholder="https://..." 
-                        className="flex-1 bg-bg-center border border-grid-color rounded p-1 text-[10px] text-text-main focus:outline-none focus:ring-1 focus:ring-accent-blue"
-                        value={syncUrl}
-                        onChange={(e) => setSyncUrl(e.target.value)}
+                        type="password" 
+                        placeholder="****" 
+                        autoFocus
+                        className="flex-1 bg-bg-deep border border-grid-color rounded p-2 text-xs text-text-main focus:outline-none focus:ring-1 focus:ring-accent-blue"
+                        value={passwordInput}
+                        onChange={(e) => setPasswordInput(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleVerifyPassword()}
                       />
                       <button 
-                        onClick={() => syncWithBVC(syncUrl)}
-                        disabled={!syncUrl || isSyncing}
-                        className="bg-accent-blue text-white p-1 rounded disabled:opacity-50"
+                        onClick={handleVerifyPassword}
+                        className="bg-accent-blue text-white px-2 rounded"
                       >
-                        {isSyncing ? <Loader2 className="animate-spin" size={14} /> : <ChevronRight size={14} />}
+                        <ChevronRight size={14} />
                       </button>
                     </div>
-                  </div>
-
-                  <div className="flex flex-col gap-2">
                     <button 
-                      onClick={() => syncWithBVC()}
-                      disabled={isSyncing}
-                      className="w-full flex items-center justify-center gap-2 p-2.5 rounded-lg bg-accent-blue text-white cursor-pointer hover:bg-accent-blue/90 transition-all disabled:opacity-50"
+                      onClick={() => setIsAuthenticating(false)}
+                      className="w-full mt-2 text-[10px] text-text-dim hover:text-text-main font-bold uppercase transition-colors"
                     >
-                      {isSyncing ? <Loader2 className="animate-spin" size={16} /> : <Activity size={16} />}
-                      <span className="font-medium text-xs">Sincronizar BVC</span>
+                      Cerrar
                     </button>
-
-                    <label className="flex items-center justify-center gap-2 p-2.5 rounded-lg bg-accent-purple text-white cursor-pointer hover:bg-accent-purple/90 transition-all">
-                      <Upload size={16} />
-                      <span className="font-medium text-xs">Subir PDF BVC</span>
-                      <input type="file" className="hidden" onChange={handleFileUpload} accept=".pdf,application/pdf" />
-                    </label>
-                  </div>
-
+                  </motion.div>
+                ) : (
                   <button 
-                    onClick={() => setShowAdminPanel(false)}
-                    className="w-full py-2 text-[10px] font-bold text-text-dim hover:text-text-main transition-colors uppercase border-t border-grid-color"
+                    onClick={() => setIsAuthenticating(true)}
+                    className="flex items-center justify-center gap-2.5 px-4 py-2.5 rounded-xl border-2 border-dashed border-accent-blue/30 text-accent-blue hover:bg-accent-blue/5 hover:border-accent-blue transition-all group"
                   >
-                    Cerrar Panel
+                    <FileUp size={20} className="group-hover:scale-110 transition-transform" />
+                    <span className="hidden md:inline font-bold text-xs uppercase tracking-tight">Actualización Datos PDF</span>
                   </button>
-                </motion.div>
-              ) : isAuthenticating ? (
-                <motion.div
-                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                  className="absolute right-0 top-12 bg-bg-center p-4 rounded-xl border border-grid-color shadow-2xl min-w-[200px]"
-                >
-                  <p className="text-[10px] font-bold text-text-dim uppercase mb-2">Clave Actualización</p>
-                  <div className="flex gap-1">
-                    <input 
-                      type="password" 
-                      placeholder="****" 
-                      autoFocus
-                      className="flex-1 bg-bg-deep border border-grid-color rounded p-2 text-xs text-text-main focus:outline-none focus:ring-1 focus:ring-accent-blue"
-                      value={passwordInput}
-                      onChange={(e) => setPasswordInput(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleVerifyPassword()}
-                    />
-                    <button 
-                      onClick={handleVerifyPassword}
-                      className="bg-accent-blue text-white px-2 rounded"
-                    >
-                      <ChevronRight size={14} />
-                    </button>
-                  </div>
-                  <button 
-                    onClick={() => setIsAuthenticating(false)}
-                    className="w-full mt-2 text-[10px] text-text-dim hover:text-text-main font-bold uppercase transition-colors"
-                  >
-                    Cerrar
-                  </button>
-                </motion.div>
-              ) : (
-                <button 
-                  onClick={() => setIsAuthenticating(true)}
-                  className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border-2 border-dashed border-grid-color text-text-dim hover:border-accent-blue/50 hover:text-accent-blue transition-all"
-                >
-                  <FileText size={18} />
-                  <span className="hidden sm:inline font-bold text-[10px] uppercase whitespace-nowrap">Actualización de Datos</span>
-                </button>
-              )}
-            </AnimatePresence>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Mobile Hamburger Button */}
+            <button 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden p-2 text-text-dim hover:text-white transition-colors"
+            >
+              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
           </div>
         </nav>
+
+        {/* Mobile Menu Overlay */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div 
+              initial={{ opacity: 0, x: '100%' }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed inset-0 bg-bg-deep z-[60] flex flex-col p-6 md:hidden overflow-y-auto"
+            >
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-accent-blue rounded-lg flex items-center justify-center">
+                    <TrendingUp className="text-white w-4 h-4" />
+                  </div>
+                  <span className="font-bold text-lg text-white">Menú Principal</span>
+                </div>
+                <button 
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="p-2 text-text-dim hover:text-white"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Nube Conectada Status Section */}
+                <div className="p-4 rounded-xl bg-bg-center border border-grid-color">
+                  <p className="text-[10px] font-bold text-text-dim uppercase mb-3">Estado de Conexión</p>
+                  {isLoadingPersistence ? (
+                     <div className="flex items-center gap-3">
+                      <Loader2 className="w-5 h-5 text-accent-blue animate-spin" />
+                      <span className="text-sm text-text-main font-medium">Sincronizando con la nube...</span>
+                     </div>
+                  ) : (
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-accent-blue animate-pulse" />
+                        <span className="text-sm text-accent-blue font-bold tracking-wide">NUBE CONECTADA</span>
+                      </div>
+                      {data.lastUpdated && (
+                        <p className="text-[11px] text-text-dim pl-4">
+                          Última actualización: {new Date(data.lastUpdated).toLocaleTimeString()}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Navigation Links */}
+                <div className="flex flex-col gap-2">
+                  <p className="text-[10px] font-bold text-text-dim uppercase px-1 mb-1">Vistas</p>
+                  <button 
+                    onClick={() => { setView('dashboard'); setIsMobileMenuOpen(false); }}
+                    className={`flex items-center gap-3 p-4 rounded-xl transition-all ${view === 'dashboard' ? 'bg-accent-blue/10 text-accent-blue' : 'bg-bg-center border border-grid-color text-text-main'}`}
+                  >
+                    <LayoutDashboard size={20} />
+                    <span className="font-bold">Dashboard de Resumen</span>
+                  </button>
+                  <button 
+                    onClick={() => { setView('spreadsheet'); setIsMobileMenuOpen(false); }}
+                    className={`flex items-center gap-3 p-4 rounded-xl transition-all ${view === 'spreadsheet' ? 'bg-accent-blue/10 text-accent-blue' : 'bg-bg-center border border-grid-color text-text-main'}`}
+                  >
+                    <FileSpreadsheet size={20} />
+                    <span className="font-bold">Explorador de Mercado (Grid)</span>
+                  </button>
+                </div>
+
+                {/* Admin / Update Section */}
+                <div className="flex flex-col gap-2">
+                  <p className="text-[10px] font-bold text-text-dim uppercase px-1 mb-1">Administración</p>
+                  {!showAdminPanel ? (
+                    <button 
+                      onClick={() => {
+                        setIsAuthenticating(true);
+                      }}
+                      className="flex items-center justify-center gap-3 p-4 rounded-xl border-2 border-dashed border-accent-blue/40 text-accent-blue bg-accent-blue/5 w-full"
+                    >
+                      <FileUp size={22} />
+                      <span className="font-bold">Actualización Datos PDF</span>
+                    </button>
+                  ) : (
+                    <div className="bg-bg-center border border-accent-blue/30 p-4 rounded-xl space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-accent-blue uppercase">Panel de Control</span>
+                        <button onClick={() => setShowAdminPanel(false)} className="text-[10px] font-bold text-text-dim">Cerrar</button>
+                      </div>
+                      
+                      <button 
+                        onClick={() => { syncWithBVC(); setIsMobileMenuOpen(false); }}
+                        disabled={isSyncing}
+                        className="w-full flex items-center justify-center gap-3 p-4 rounded-xl bg-accent-blue text-white shadow-xl shadow-accent-blue/20"
+                      >
+                        {isSyncing ? <Loader2 className="animate-spin" size={20} /> : <Activity size={20} />}
+                        <span className="font-bold">Sincronizar BVC</span>
+                      </button>
+
+                      <label className="flex items-center justify-center gap-3 p-4 rounded-xl bg-accent-purple text-white cursor-pointer shadow-xl shadow-accent-purple/20">
+                        <Upload size={20} />
+                        <span className="font-bold">Subir Reporte PDF</span>
+                        <input type="file" className="hidden" onChange={(e) => { handleFileUpload(e); setIsMobileMenuOpen(false); }} accept=".pdf,application/pdf" />
+                      </label>
+                    </div>
+                  )}
+
+                  {isAuthenticating && !showAdminPanel && (
+                    <div className="p-4 bg-bg-center border border-grid-color rounded-xl flex flex-col gap-3">
+                      <p className="text-xs text-text-dim text-center">Ingresa la clave maestra en el teclado de abajo:</p>
+                      <div className="flex gap-2">
+                        <input 
+                          type="password" 
+                          placeholder="Pin..."
+                          className="flex-1 bg-bg-deep border border-grid-color rounded-lg p-3 text-center text-lg font-bold text-accent-blue focus:outline-none"
+                          value={passwordInput}
+                          onChange={(e) => setPasswordInput(e.target.value)}
+                           onKeyDown={(e) => e.key === 'Enter' && handleVerifyPassword()}
+                        />
+                        <button onClick={handleVerifyPassword} className="bg-accent-blue text-white px-4 rounded-lg"> OK </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        </>
       )}
 
       {/* Main Content */}
