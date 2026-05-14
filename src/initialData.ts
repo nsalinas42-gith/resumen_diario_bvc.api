@@ -31,5 +31,6 @@ export const INITIAL_DATA: DashboardState = {
       { ticker: "TPG", count: 291 },
       { ticker: "BVCC", count: 204 },
     ]
-  }
+  },
+  lastUpdated: new Date().toISOString()
 };

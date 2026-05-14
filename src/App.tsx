@@ -48,7 +48,9 @@ export default function App() {
   useEffect(() => {
     // Listen for real-time updates from Firestore
     const unsub = onSnapshot(doc(db, 'app_data', 'current_state'), (docSnap) => {
-      if (docSnap.exists()) {
+      // Logic: Only update local state if we don't have local pending writes 
+      // (this prevents the "revert" effect while saving)
+      if (docSnap.exists() && !docSnap.metadata.hasPendingWrites) {
         setData(docSnap.data() as DashboardState);
       }
       setIsLoadingPersistence(false);
@@ -125,17 +127,20 @@ export default function App() {
       summary: {
         ...extracted.summary,
         topOperationsCount: extracted.summary?.topOperationsCount || []
-      }
+      },
+      lastUpdated: new Date().toISOString()
     };
 
+    // Update local state first for immediate UI response
     setData(newState);
 
     // Persist to Firebase
     try {
       await setDoc(doc(db, 'app_data', 'current_state'), newState);
-      console.log("Data persisted to Firestore");
+      console.log("Data persisted to Firestore successfully");
     } catch (error) {
       console.error("Failed to persist data:", error);
+      alert("Error de persistencia: los datos se actualizaron localmente pero no se pudieron guardar en la nube.");
     }
   };
 
@@ -245,6 +250,17 @@ export default function App() {
                 <TrendingUp className="text-white w-4 h-4 md:w-6 md:h-6" />
               </div>
               <span className="font-bold text-lg md:text-xl tracking-tight whitespace-nowrap text-white">Resumen BVC</span>
+              {isLoadingPersistence ? (
+                <Loader2 className="w-4 h-4 text-accent-blue animate-spin" />
+              ) : (
+                <div className="flex flex-col">
+                  {data.lastUpdated && (
+                    <span className="text-[10px] text-text-dim leading-tight hidden sm:block">
+                      Dato: {new Date(data.lastUpdated).toLocaleTimeString()}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="flex items-center gap-1 md:gap-2">

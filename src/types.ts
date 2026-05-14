@@ -28,5 +28,6 @@ export interface MarketSummary {
 export interface DashboardState {
   stocks: StockData[];
   indices: IndexData[];
-  summary: MarketSummary | null;
+  summary: MarketSummary;
+  lastUpdated?: string;
 }
