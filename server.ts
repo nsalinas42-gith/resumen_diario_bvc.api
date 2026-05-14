@@ -5,7 +5,6 @@ import axios from "axios";
 import * as cheerio from "cheerio";
 import multer from "multer";
 import fs from "fs";
-import { GoogleGenAI, Type } from "@google/genai";
 
 const app = express();
 const PORT = 3000;
@@ -40,108 +39,6 @@ const upload = multer({
   }
 });
 
-// Initialize Gemini on server
-const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
-
-async function extractDataFromPdf(pdfBuffer: Buffer) {
-  const model = "gemini-3-flash-preview";
-  
-  const prompt = `Extract all the financial data from this PDF of a daily report from the Bolsa de Valores de Caracas (BVC). 
-  Return the information in a precise JSON format. 
-  
-  Focus on:
-  1. RENDIMIENTO PROMEDIO DE RENTA VARIABLE table (Ticker, Name, Close Bs, % Change Bs, Close $, % Change $).
-  2. ÍNDICES BURSÁTILES (Name, Points, % Change).
-  3. Market summary like Date, Total effective volume (Bs and USD), Dollar rate (SMC), and top transacted actions.
-  
-  Ensure numbers are parsed correctly (remove % and Bs signs).`;
-
-  const response = await genAI.models.generateContent({
-    model,
-    contents: {
-      parts: [
-        {
-          inlineData: {
-            mimeType: "application/pdf",
-            data: pdfBuffer.toString("base64")
-          }
-        },
-        { text: prompt }
-      ]
-    },
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          stocks: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                ticker: { type: Type.STRING },
-                name: { type: Type.STRING },
-                closeBs: { type: Type.NUMBER },
-                changeBs: { type: Type.NUMBER },
-                closeUsd: { type: Type.NUMBER },
-                changeUsd: { type: Type.NUMBER }
-              },
-              required: ["ticker", "name", "closeBs", "changeBs", "closeUsd", "changeUsd"]
-            }
-          },
-          indices: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                name: { type: Type.STRING },
-                points: { type: Type.NUMBER },
-                change: { type: Type.NUMBER }
-              },
-              required: ["name", "points", "change"]
-            }
-          },
-          summary: {
-            type: Type.OBJECT,
-            properties: {
-              date: { type: Type.STRING },
-              totalVolumeBs: { type: Type.NUMBER },
-              totalVolumeUsd: { type: Type.NUMBER },
-              dollarRate: { type: Type.NUMBER },
-              topVolumeActions: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    ticker: { type: Type.STRING },
-                    volume: { type: Type.NUMBER }
-                  }
-                }
-              },
-              topOperationsCount: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    ticker: { type: Type.STRING },
-                    count: { type: Type.NUMBER }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  });
-
-  if (!response || !response.text) {
-    throw new Error("No response or text from Gemini");
-  }
-
-  return JSON.parse(response.text);
-}
-
 async function getPdfBase64(pdfUrl: string) {
   // Download PDF as buffer
   const pdfResponse = await axios.get(pdfUrl, { 
@@ -158,14 +55,11 @@ app.post("/api/upload", upload.single("pdf"), async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: "No se subió ningún archivo" });
     }
-
-    const pdfBuffer = fs.readFileSync(req.file.path);
-    const data = await extractDataFromPdf(pdfBuffer);
-    
-    res.json(data);
+    // Return success and file info
+    res.json({ message: "Archivo subido correctamente", filename: req.file.filename });
   } catch (error: any) {
-    console.error("Upload/Process error:", error);
-    res.status(500).json({ error: error.message || "Error al procesar el PDF" });
+    console.error("Upload error:", error);
+    res.status(500).json({ error: error.message || "Error al subir el PDF" });
   }
 });
 
@@ -275,7 +169,6 @@ app.get("/api/sync", async (req, res) => {
         for (const candidate of candidates) {
           try {
             logTrace.push(`Probando: ${candidate}`);
-            // Using GET with small timeout and range header to save bandwidth
             await axios.head(candidate, { ...axiosConfig, timeout: 5000 });
             pdfUrl = candidate;
             logTrace.push(`ÉXITO: ${pdfUrl}`);
@@ -289,15 +182,11 @@ app.get("/api/sync", async (req, res) => {
     }
 
     if (!pdfUrl) {
-      console.error("Trace de sincronización completa:", logTrace.join("\n"));
-      throw new Error(`No se pudo localizar el reporte más reciente automáticamente. Intenta copiar el link directo al PDF y pegarlo. Detalle: ${logTrace.slice(-2).join(" | ")}`);
+      throw new Error(`No se pudo localizar el reporte más reciente automáticamente.`);
     }
 
     const pdfBase64 = await getPdfBase64(pdfUrl);
-    const pdfBuffer = Buffer.from(pdfBase64, 'base64');
-    const extractedData = await extractDataFromPdf(pdfBuffer);
-    
-    res.json({ data: extractedData, pdfUrl });
+    res.json({ pdfBase64, pdfUrl });
   } catch (error: any) {
     console.error("Sync error:", error);
     res.status(500).json({ error: error.message || "Failed to sync data" });
@@ -306,6 +195,7 @@ app.get("/api/sync", async (req, res) => {
 
 // Vite middleware
 async function startServer() {
+  const appPort = 3000;
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: { middlewareMode: true },
@@ -320,8 +210,8 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+  app.listen(appPort, "0.0.0.0", () => {
+    console.log(`Server running on http://localhost:${appPort}`);
   });
 }
 

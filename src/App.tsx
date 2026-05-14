@@ -27,11 +27,14 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { INITIAL_DATA } from './initialData';
 import { DashboardState, StockData } from './types';
+import { extractBVCDataFromPdf } from './services/geminiService';
 
 export default function App() {
   const [data, setData] = useState<DashboardState>(INITIAL_DATA);
   const [view, setView] = useState<'dashboard' | 'spreadsheet'>('dashboard');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncUrl, setSyncUrl] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: keyof StockData; direction: 'asc' | 'desc' } | null>(null);
 
@@ -62,6 +65,52 @@ export default function App() {
     }
   };
 
+  const syncWithBVC = async (customUrl?: string) => {
+    setIsSyncing(true);
+    setIsProcessing(true);
+    try {
+      const url = customUrl ? `/api/sync?url=${encodeURIComponent(customUrl)}` : '/api/sync';
+      const response = await fetch(url);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Error al sincronizar con el mercado');
+      }
+      const { pdfBase64, pdfUrl } = await response.json();
+      
+      const extracted = await extractBVCDataFromPdf(pdfBase64);
+      updateDashboardData(extracted);
+      
+      alert(`Reporte sincronizado con éxito desde: ${pdfUrl.split('/').pop()}`);
+      setSyncUrl('');
+    } catch (error: any) {
+      console.error("Sync error:", error);
+      alert(`No se pudo sincronizar automáticamente. ${error.message || ''}\n\nSugerencia: Puedes intentar copiar el link directo al PDF y pegarlo en el campo de SYNC Manual.`);
+    } finally {
+      setIsSyncing(false);
+      setIsProcessing(false);
+    }
+  };
+
+  const updateDashboardData = (extracted: DashboardState) => {
+    // Preserve history for indices if available in previous state
+    const updatedIndices = extracted.indices.map((newIdx: any) => {
+      const existing = data.indices.find(i => i.name === newIdx.name);
+      return {
+        ...newIdx,
+        history: existing?.history ? [...existing.history, newIdx.points] : [newIdx.points]
+      };
+    });
+
+    setData({
+      ...extracted,
+      indices: updatedIndices,
+      summary: {
+        ...extracted.summary,
+        topOperationsCount: extracted.summary?.topOperationsCount || []
+      }
+    });
+  };
+
   const isWidget = useMemo(() => {
     return new URLSearchParams(window.location.search).get('mode') === 'widget';
   }, []);
@@ -77,39 +126,25 @@ export default function App() {
 
     setIsProcessing(true);
     try {
+      // 1. Upload for storage
       const formData = new FormData();
       formData.append('pdf', file);
+      fetch('/api/upload', { method: 'POST', body: formData }).catch(e => console.warn("Backup upload failed", e));
 
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Error al procesar el archivo');
-      }
-
-      const extracted = await response.json();
-      
-      // Preserve history for indices if available in previous state
-      const updatedIndices = extracted.indices.map((newIdx: any) => {
-        const existing = data.indices.find(i => i.name === newIdx.name);
-        return {
-          ...newIdx,
-          history: existing?.history ? [...existing.history, newIdx.points] : [newIdx.points]
+      // 2. Read locally for client-side processing
+      const reader = new FileReader();
+      const pdfBase64 = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(',')[1]); // Remove prefix
         };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
       });
 
-      setData({
-        ...extracted,
-        indices: updatedIndices,
-        summary: {
-          ...extracted.summary,
-          // Ensure topOperationsCount exists even if missing from extraction
-          topOperationsCount: extracted.summary?.topOperationsCount || []
-        }
-      });
+      // 3. Process with Gemini client-side
+      const extracted = await extractBVCDataFromPdf(pdfBase64);
+      updateDashboardData(extracted);
       
       alert('Datos actualizados correctamente desde el PDF.');
     } catch (error: any) {
@@ -117,7 +152,6 @@ export default function App() {
       alert(`Hubo un error al procesar el PDF: ${error.message}`);
     } finally {
       setIsProcessing(false);
-      // Reset input value to allow uploading same file again
       event.target.value = '';
     }
   };
@@ -212,7 +246,36 @@ export default function App() {
                   exit={{ opacity: 0, y: -10, scale: 0.95 }}
                   className="absolute right-0 top-12 bg-bg-center border border-grid-color p-4 rounded-xl shadow-2xl space-y-4 min-w-[260px]"
                 >
+                  <div className="bg-bg-deep p-3 rounded-lg border border-grid-color">
+                    <p className="text-[10px] font-bold text-text-dim uppercase mb-2">SYNC Manual (PDF URL)</p>
+                    <div className="flex gap-1">
+                      <input 
+                        type="text" 
+                        placeholder="https://..." 
+                        className="flex-1 bg-bg-center border border-grid-color rounded p-1 text-[10px] text-text-main focus:outline-none focus:ring-1 focus:ring-accent-blue"
+                        value={syncUrl}
+                        onChange={(e) => setSyncUrl(e.target.value)}
+                      />
+                      <button 
+                        onClick={() => syncWithBVC(syncUrl)}
+                        disabled={!syncUrl || isSyncing}
+                        className="bg-accent-blue text-white p-1 rounded disabled:opacity-50"
+                      >
+                        {isSyncing ? <Loader2 className="animate-spin" size={14} /> : <ChevronRight size={14} />}
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="flex flex-col gap-2">
+                    <button 
+                      onClick={() => syncWithBVC()}
+                      disabled={isSyncing}
+                      className="w-full flex items-center justify-center gap-2 p-2.5 rounded-lg bg-accent-blue text-white cursor-pointer hover:bg-accent-blue/90 transition-all disabled:opacity-50"
+                    >
+                      {isSyncing ? <Loader2 className="animate-spin" size={16} /> : <Activity size={16} />}
+                      <span className="font-medium text-xs">Sincronizar BVC</span>
+                    </button>
+
                     <label className="flex items-center justify-center gap-2 p-2.5 rounded-lg bg-accent-purple text-white cursor-pointer hover:bg-accent-purple/90 transition-all">
                       <Upload size={16} />
                       <span className="font-medium text-xs">Subir PDF BVC</span>
@@ -300,6 +363,9 @@ export default function App() {
                       exit={{ opacity: 0, x: 20 }}
                       className="bg-bg-center p-1 rounded-lg border border-grid-color flex items-center gap-2"
                     >
+                      <button onClick={() => syncWithBVC()} className="p-1 text-accent-blue hover:bg-white/5 rounded-md" title="Sync">
+                        {isSyncing ? <Loader2 className="animate-spin" size={14} /> : <Activity size={14} />}
+                      </button>
                       <label className="p-1 text-accent-purple hover:bg-white/5 rounded-md cursor-pointer" title="Subir PDF">
                         <Upload size={14} />
                         <input type="file" className="hidden" onChange={handleFileUpload} accept=".pdf,application/pdf" />
