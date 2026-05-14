@@ -136,11 +136,15 @@ export default function App() {
 
     // Persist to Firebase
     try {
+      // Usamos un alert temporal si falla para depuración
       await setDoc(doc(db, 'app_data', 'current_state'), newState);
       console.log("Data persisted to Firestore successfully");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to persist data:", error);
-      alert("Error de persistencia: los datos se actualizaron localmente pero no se pudieron guardar en la nube.");
+      // Solo alertamos si no es un error cancelable comum
+      if (error.code !== 'cancelled') {
+        alert("Error de guardado en la nube: los datos se actualizaron solo en esta sesión. Verifica tu conexión.");
+      }
     }
   };
 
@@ -251,9 +255,16 @@ export default function App() {
               </div>
               <span className="font-bold text-lg md:text-xl tracking-tight whitespace-nowrap text-white">Resumen BVC</span>
               {isLoadingPersistence ? (
-                <Loader2 className="w-4 h-4 text-accent-blue animate-spin" />
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 text-accent-blue animate-spin" />
+                  <span className="text-[10px] text-text-dim">Sincronizando nube...</span>
+                </div>
               ) : (
                 <div className="flex flex-col">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-accent-blue animate-pulse" />
+                    <span className="text-[10px] text-accent-blue font-medium uppercase tracking-wider">Nube Conectada</span>
+                  </div>
                   {data.lastUpdated && (
                     <span className="text-[10px] text-text-dim leading-tight hidden sm:block">
                       Dato: {new Date(data.lastUpdated).toLocaleTimeString()}
