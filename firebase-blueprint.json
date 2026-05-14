@@ -1,0 +1,55 @@
+{
+  "entities": {
+    "DashboardState": {
+      "title": "Dashboard State",
+      "description": "The current state of the financial dashboard, including stocks and indices.",
+      "type": "object",
+      "properties": {
+        "stocks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "ticker": { "type": "string" },
+              "name": { "type": "string" },
+              "closeBs": { "type": "number" },
+              "changeBs": { "type": "number" },
+              "closeUsd": { "type": "number" },
+              "changeUsd": { "type": "number" }
+            }
+          }
+        },
+        "indices": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "points": { "type": "number" },
+              "change": { "type": "number" },
+              "history": { "type": "array", "items": { "type": "number" } }
+            }
+          }
+        },
+        "summary": {
+          "type": "object",
+          "properties": {
+            "date": { "type": "string" },
+            "totalVolumeBs": { "type": "number" },
+            "totalVolumeUsd": { "type": "number" },
+            "dollarRate": { "type": "number" },
+            "topVolumeActions": { "type": "array" },
+            "topOperationsCount": { "type": "array" }
+          }
+        },
+        "lastUpdated": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/app_data/current_state": {
+      "schema": "DashboardState",
+      "description": "Stores the single source of truth for the dashboard data."
+    }
+  }
+}

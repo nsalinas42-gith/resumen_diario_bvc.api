@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isValidDashboard(data) {
+      return data.stocks is list && 
+             data.indices is list && 
+             data.summary is map;
+    }
+
+    match /app_data/current_state {
+      allow read: if true;
+      allow write: if isValidDashboard(request.resource.data);
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

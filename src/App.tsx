@@ -28,11 +28,14 @@ import { motion, AnimatePresence } from 'motion/react';
 import { INITIAL_DATA } from './initialData';
 import { DashboardState, StockData } from './types';
 import { extractBVCDataFromPdf } from './services/geminiService';
+import { db } from './lib/firebase';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
 
 export default function App() {
   const [data, setData] = useState<DashboardState>(INITIAL_DATA);
   const [view, setView] = useState<'dashboard' | 'spreadsheet'>('dashboard');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoadingPersistence, setIsLoadingPersistence] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncUrl, setSyncUrl] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -41,6 +44,21 @@ export default function App() {
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
+
+  useEffect(() => {
+    // Listen for real-time updates from Firestore
+    const unsub = onSnapshot(doc(db, 'app_data', 'current_state'), (docSnap) => {
+      if (docSnap.exists()) {
+        setData(docSnap.data() as DashboardState);
+      }
+      setIsLoadingPersistence(false);
+    }, (error) => {
+      console.error("Firestore loading error:", error);
+      setIsLoadingPersistence(false);
+    });
+
+    return () => unsub();
+  }, []);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -78,7 +96,7 @@ export default function App() {
       const { pdfBase64, pdfUrl } = await response.json();
       
       const extracted = await extractBVCDataFromPdf(pdfBase64);
-      updateDashboardData(extracted);
+      await updateDashboardData(extracted);
       
       alert(`Reporte sincronizado con éxito desde: ${pdfUrl.split('/').pop()}`);
       setSyncUrl('');
@@ -91,7 +109,7 @@ export default function App() {
     }
   };
 
-  const updateDashboardData = (extracted: DashboardState) => {
+  const updateDashboardData = async (extracted: DashboardState) => {
     // Preserve history for indices if available in previous state
     const updatedIndices = extracted.indices.map((newIdx: any) => {
       const existing = data.indices.find(i => i.name === newIdx.name);
@@ -101,14 +119,24 @@ export default function App() {
       };
     });
 
-    setData({
+    const newState: DashboardState = {
       ...extracted,
       indices: updatedIndices,
       summary: {
         ...extracted.summary,
         topOperationsCount: extracted.summary?.topOperationsCount || []
       }
-    });
+    };
+
+    setData(newState);
+
+    // Persist to Firebase
+    try {
+      await setDoc(doc(db, 'app_data', 'current_state'), newState);
+      console.log("Data persisted to Firestore");
+    } catch (error) {
+      console.error("Failed to persist data:", error);
+    }
   };
 
   const isWidget = useMemo(() => {
@@ -144,7 +172,7 @@ export default function App() {
 
       // 3. Process with Gemini client-side
       const extracted = await extractBVCDataFromPdf(pdfBase64);
-      updateDashboardData(extracted);
+      await updateDashboardData(extracted);
       
       alert('Datos actualizados correctamente desde el PDF.');
     } catch (error: any) {
