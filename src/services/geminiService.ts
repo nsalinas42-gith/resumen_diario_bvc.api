@@ -1,8 +1,15 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { DashboardState } from "../types";
 
-// Always use process.env.GEMINI_API_KEY for the Gemini API.
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+// Always use process.env.GEMINI_API_KEY for the Gemini API in AI Studio.
+// For external deployments like Vercel, we check for VITE_GEMINI_API_KEY.
+const apiKey = process.env.GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY || "";
+
+if (!apiKey) {
+  console.warn("Gemini API Key is missing. If you are on Vercel, ensure you have set VITE_GEMINI_API_KEY.");
+}
+
+const ai = new GoogleGenAI({ apiKey });
 
 export async function extractBVCDataFromPdf(pdfBase64: string): Promise<DashboardState> {
   const model = "gemini-3-flash-preview";
