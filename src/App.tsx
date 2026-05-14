@@ -95,27 +95,58 @@ export default function App() {
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files) return;
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== 'application/pdf') {
+      alert('Por favor, sube solo archivos PDF.');
+      return;
+    }
 
     setIsProcessing(true);
     try {
-      const base64Promises = Array.from(files).map((file: File) => {
-        return new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onload = (e) => resolve(e.target?.result as string);
-          reader.readAsDataURL(file);
-        });
+      const formData = new FormData();
+      formData.append('pdf', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
       });
 
-      const base64Images = await Promise.all(base64Promises);
-      const extracted = await extractBVCData(base64Images);
-      setData(extracted);
-    } catch (error) {
-      console.error("Error processing files:", error);
-      alert("Hubo un error al procesar las imágenes. Asegúrate de que sean capturas claras del reporte de la BVC.");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Error al procesar el archivo');
+      }
+
+      const extracted = await response.json();
+      
+      // Preserve history for indices if available in previous state
+      const updatedIndices = extracted.indices.map((newIdx: any) => {
+        const existing = data.indices.find(i => i.name === newIdx.name);
+        return {
+          ...newIdx,
+          history: existing?.history ? [...existing.history, newIdx.points] : [newIdx.points]
+        };
+      });
+
+      setData({
+        ...extracted,
+        indices: updatedIndices,
+        summary: {
+          ...extracted.summary,
+          // Ensure topOperationsCount exists even if missing from extraction
+          topOperationsCount: extracted.summary?.topOperationsCount || []
+        }
+      });
+      
+      alert('Datos actualizados correctamente desde el PDF.');
+    } catch (error: any) {
+      console.error("Error processing file:", error);
+      alert(`Hubo un error al procesar el PDF: ${error.message}`);
     } finally {
       setIsProcessing(false);
+      // Reset input value to allow uploading same file again
+      event.target.value = '';
     }
   };
 
@@ -241,8 +272,8 @@ export default function App() {
 
                     <label className="flex items-center justify-center gap-2 p-2.5 rounded-lg bg-accent-purple text-white cursor-pointer hover:bg-accent-purple/90 transition-all">
                       <Upload size={16} />
-                      <span className="font-medium text-xs">Subir Captura</span>
-                      <input type="file" multiple className="hidden" onChange={handleFileUpload} accept="image/*" />
+                      <span className="font-medium text-xs">Subir PDF BVC</span>
+                      <input type="file" className="hidden" onChange={handleFileUpload} accept=".pdf,application/pdf" />
                     </label>
                   </div>
 

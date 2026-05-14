@@ -3,11 +3,146 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import axios from "axios";
 import * as cheerio from "cheerio";
+import multer from "multer";
+import fs from "fs";
+import { GoogleGenAI, Type } from "@google/genai";
 
 const app = express();
 const PORT = 3000;
 
+// Gemini setup for server-side analysis
+const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+
 app.use(express.json());
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(process.cwd(), "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Multer storage config
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, file.fieldname + "-" + uniqueSuffix + ".pdf");
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === "application/pdf") {
+      cb(null, true);
+    } else {
+      cb(new Error("Solo se permiten archivos PDF"));
+    }
+  }
+});
+
+async function extractDataFromPdf(pdfBuffer: Buffer) {
+  const model = "gemini-1.5-flash"; // Stable model for server side
+  
+  const prompt = `Extract all the financial data from this PDF of a daily report from the Bolsa de Valores de Caracas (BVC). 
+  Return the information in a precise JSON format. 
+  
+  Focus on:
+  1. RENDIMIENTO PROMEDIO DE RENTA VARIABLE table (Ticker, Name, Close Bs, % Change Bs, Close $, % Change $).
+  2. ÍNDICES BURSÁTILES (Name, Points, % Change).
+  3. Market summary like Date, Total effective volume (Bs and USD), Dollar rate (SMC), and top transacted actions.
+  
+  Ensure numbers are parsed correctly (remove % and Bs signs).`;
+
+  const response = await (genAI as any).models.generateContent({
+    model,
+    contents: {
+      parts: [
+        {
+          inlineData: {
+            mimeType: "application/pdf",
+            data: pdfBuffer.toString("base64")
+          }
+        },
+        { text: prompt }
+      ]
+    },
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          stocks: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                ticker: { type: Type.STRING },
+                name: { type: Type.STRING },
+                closeBs: { type: Type.NUMBER },
+                changeBs: { type: Type.NUMBER },
+                closeUsd: { type: Type.NUMBER },
+                changeUsd: { type: Type.NUMBER }
+              },
+              required: ["ticker", "name", "closeBs", "changeBs", "closeUsd", "changeUsd"]
+            }
+          },
+          indices: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                name: { type: Type.STRING },
+                points: { type: Type.NUMBER },
+                change: { type: Type.NUMBER }
+              },
+              required: ["name", "points", "change"]
+            }
+          },
+          summary: {
+            type: Type.OBJECT,
+            properties: {
+              date: { type: Type.STRING },
+              totalVolumeBs: { type: Type.NUMBER },
+              totalVolumeUsd: { type: Type.NUMBER },
+              dollarRate: { type: Type.NUMBER },
+              topVolumeActions: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    ticker: { type: Type.STRING },
+                    volume: { type: Type.NUMBER }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  });
+
+  return JSON.parse(response.text);
+}
+
+app.post("/api/upload", upload.single("pdf"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No se subió ningún archivo" });
+    }
+
+    const pdfBuffer = fs.readFileSync(req.file.path);
+    const data = await extractDataFromPdf(pdfBuffer);
+    
+    res.json(data);
+  } catch (error: any) {
+    console.error("Upload/Process error:", error);
+    res.status(500).json({ error: error.message || "Error al procesar el PDF" });
+  }
+});
 
 async function getPdfBase64(pdfUrl: string) {
   // Download PDF as buffer
