@@ -25,7 +25,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { INITIAL_DATA, extractBVCData, extractBVCDataFromPdf } from './services/geminiService';
+import { INITIAL_DATA } from './initialData';
 import { DashboardState, StockData } from './types';
 
 export default function App() {
@@ -77,30 +77,22 @@ export default function App() {
 
     setIsProcessing(true);
     try {
-      // 1. Upload to server (just for storage as requested)
       const formData = new FormData();
       formData.append('pdf', file);
 
-      fetch('/api/upload', {
+      const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
-      }).catch(err => console.warn("Failed to save copy on server:", err));
-
-      // 2. Read as base64 for client-side analysis
-      const reader = new FileReader();
-      const pdfBase64 = await new Promise<string>((resolve, reject) => {
-        reader.onload = () => {
-          const result = reader.result as string;
-          resolve(result.split(',')[1]); // Remove data:application/pdf;base64,
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
       });
 
-      // 3. Analyze using Gemini client-side SDK (from geminiService)
-      const extracted = await extractBVCDataFromPdf(pdfBase64);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Error al procesar el archivo');
+      }
+
+      const extracted = await response.json();
       
-      // Preservation logic...
+      // Preserve history for indices if available in previous state
       const updatedIndices = extracted.indices.map((newIdx: any) => {
         const existing = data.indices.find(i => i.name === newIdx.name);
         return {
