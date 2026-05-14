@@ -35,8 +35,6 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{ key: keyof StockData; direction: 'asc' | 'desc' } | null>(null);
 
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [syncUrl, setSyncUrl] = useState('');
   const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
@@ -67,32 +65,6 @@ export default function App() {
   const isWidget = useMemo(() => {
     return new URLSearchParams(window.location.search).get('mode') === 'widget';
   }, []);
-
-  const syncWithBVC = async (customUrl?: string) => {
-    setIsSyncing(true);
-    setIsProcessing(true);
-    try {
-      const url = customUrl ? `/api/sync?url=${encodeURIComponent(customUrl)}` : '/api/sync';
-      const response = await fetch(url);
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Error al sincronizar con el mercado');
-      }
-      const { pdfBase64, pdfUrl } = await response.json();
-      
-      const extracted = await extractBVCDataFromPdf(pdfBase64);
-      setData(extracted);
-      
-      alert(`Reporte sincronizado con éxito desde: ${pdfUrl.split('/').pop()}`);
-      setSyncUrl('');
-    } catch (error: any) {
-      console.error("Sync error:", error);
-      alert(`No se pudo sincronizar automáticamente. ${error.message || ''}\n\nSugerencia: Puedes intentar copiar el link directo al PDF de Rendivalores o la BVC y pegarlo aquí.`);
-    } finally {
-      setIsSyncing(false);
-      setIsProcessing(false);
-    }
-  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -248,36 +220,7 @@ export default function App() {
                   exit={{ opacity: 0, y: -10, scale: 0.95 }}
                   className="absolute right-0 top-12 bg-bg-center border border-grid-color p-4 rounded-xl shadow-2xl space-y-4 min-w-[260px]"
                 >
-                  <div className="bg-bg-deep p-3 rounded-lg border border-grid-color">
-                    <p className="text-[10px] font-bold text-text-dim uppercase mb-2">SYNC Manual (PDF URL)</p>
-                    <div className="flex gap-1">
-                      <input 
-                        type="text" 
-                        placeholder="https://..." 
-                        className="flex-1 bg-bg-center border border-grid-color rounded p-1 text-[10px] text-text-main focus:outline-none focus:ring-1 focus:ring-accent-blue"
-                        value={syncUrl}
-                        onChange={(e) => setSyncUrl(e.target.value)}
-                      />
-                      <button 
-                        onClick={() => syncWithBVC(syncUrl)}
-                        disabled={!syncUrl || isSyncing}
-                        className="bg-accent-blue text-white p-1 rounded disabled:opacity-50"
-                      >
-                        <ChevronRight size={14} />
-                      </button>
-                    </div>
-                  </div>
-
                   <div className="flex flex-col gap-2">
-                    <button 
-                      onClick={() => syncWithBVC()}
-                      disabled={isSyncing}
-                      className="w-full flex items-center justify-center gap-2 p-2.5 rounded-lg bg-accent-blue text-white cursor-pointer hover:bg-accent-blue/90 transition-all disabled:opacity-50"
-                    >
-                      {isSyncing ? <Loader2 className="animate-spin" size={16} /> : <FileText size={16} />}
-                      <span className="font-medium text-xs">Sincronizar Datos</span>
-                    </button>
-
                     <label className="flex items-center justify-center gap-2 p-2.5 rounded-lg bg-accent-purple text-white cursor-pointer hover:bg-accent-purple/90 transition-all">
                       <Upload size={16} />
                       <span className="font-medium text-xs">Subir PDF BVC</span>
@@ -365,9 +308,10 @@ export default function App() {
                       exit={{ opacity: 0, x: 20 }}
                       className="bg-bg-center p-1 rounded-lg border border-grid-color flex items-center gap-2"
                     >
-                      <button onClick={() => syncWithBVC()} className="p-1 text-accent-blue hover:bg-white/5 rounded-md" title="Sync">
-                        <FileText size={14} />
-                      </button>
+                      <label className="p-1 text-accent-purple hover:bg-white/5 rounded-md cursor-pointer" title="Subir PDF">
+                        <Upload size={14} />
+                        <input type="file" className="hidden" onChange={handleFileUpload} accept=".pdf,application/pdf" />
+                      </label>
                       <button onClick={() => setShowAdminPanel(false)} className="p-1 text-text-dim hover:text-white">
                         <ChevronRight size={14} className="rotate-90" />
                       </button>
