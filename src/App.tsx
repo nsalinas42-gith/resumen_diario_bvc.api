@@ -105,22 +105,30 @@ export default function App() {
 
     setIsProcessing(true);
     try {
+      // 1. Upload to server (just for storage as requested)
       const formData = new FormData();
       formData.append('pdf', file);
 
-      const response = await fetch('/api/upload', {
+      fetch('/api/upload', {
         method: 'POST',
         body: formData,
+      }).catch(err => console.warn("Failed to save copy on server:", err));
+
+      // 2. Read as base64 for client-side analysis
+      const reader = new FileReader();
+      const pdfBase64 = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(',')[1]); // Remove data:application/pdf;base64,
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Error al procesar el archivo');
-      }
-
-      const extracted = await response.json();
+      // 3. Analyze using Gemini client-side SDK (from geminiService)
+      const extracted = await extractBVCDataFromPdf(pdfBase64);
       
-      // Preserve history for indices if available in previous state
+      // Preservation logic...
       const updatedIndices = extracted.indices.map((newIdx: any) => {
         const existing = data.indices.find(i => i.name === newIdx.name);
         return {
