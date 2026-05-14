@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
@@ -11,7 +12,11 @@ const app = express();
 const PORT = 3000;
 
 // Gemini setup for server-side analysis
-const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+const apiKey = process.env.GEMINI_API_KEY;
+if (!apiKey) {
+  console.warn("GEMINI_API_KEY is not defined in the environment.");
+}
+const genAI = new GoogleGenAI({ apiKey: apiKey || "" });
 
 app.use(express.json());
 
@@ -56,65 +61,70 @@ async function extractDataFromPdf(pdfBuffer: Buffer) {
   
   Ensure numbers are parsed correctly (remove % and Bs signs).`;
 
-  const response = await (genAI as any).models.generateContent({
-    model,
-    contents: {
-      parts: [
+  try {
+    const response = await genAI.models.generateContent({
+      model,
+      contents: [
         {
-          inlineData: {
-            mimeType: "application/pdf",
-            data: pdfBuffer.toString("base64")
-          }
-        },
-        { text: prompt }
-      ]
-    },
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          stocks: {
-            type: Type.ARRAY,
-            items: {
+          role: "user",
+          parts: [
+            {
+              inlineData: {
+                mimeType: "application/pdf",
+                data: pdfBuffer.toString("base64")
+              }
+            },
+            { text: prompt }
+          ]
+        }
+      ],
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            stocks: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  ticker: { type: Type.STRING },
+                  name: { type: Type.STRING },
+                  closeBs: { type: Type.NUMBER },
+                  changeBs: { type: Type.NUMBER },
+                  closeUsd: { type: Type.NUMBER },
+                  changeUsd: { type: Type.NUMBER }
+                },
+                required: ["ticker", "name", "closeBs", "changeBs", "closeUsd", "changeUsd"]
+              }
+            },
+            indices: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  name: { type: Type.STRING },
+                  points: { type: Type.NUMBER },
+                  change: { type: Type.NUMBER }
+                },
+                required: ["name", "points", "change"]
+              }
+            },
+            summary: {
               type: Type.OBJECT,
               properties: {
-                ticker: { type: Type.STRING },
-                name: { type: Type.STRING },
-                closeBs: { type: Type.NUMBER },
-                changeBs: { type: Type.NUMBER },
-                closeUsd: { type: Type.NUMBER },
-                changeUsd: { type: Type.NUMBER }
-              },
-              required: ["ticker", "name", "closeBs", "changeBs", "closeUsd", "changeUsd"]
-            }
-          },
-          indices: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                name: { type: Type.STRING },
-                points: { type: Type.NUMBER },
-                change: { type: Type.NUMBER }
-              },
-              required: ["name", "points", "change"]
-            }
-          },
-          summary: {
-            type: Type.OBJECT,
-            properties: {
-              date: { type: Type.STRING },
-              totalVolumeBs: { type: Type.NUMBER },
-              totalVolumeUsd: { type: Type.NUMBER },
-              dollarRate: { type: Type.NUMBER },
-              topVolumeActions: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    ticker: { type: Type.STRING },
-                    volume: { type: Type.NUMBER }
+                date: { type: Type.STRING },
+                totalVolumeBs: { type: Type.NUMBER },
+                totalVolumeUsd: { type: Type.NUMBER },
+                dollarRate: { type: Type.NUMBER },
+                topVolumeActions: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      ticker: { type: Type.STRING },
+                      volume: { type: Type.NUMBER }
+                    }
                   }
                 }
               }
@@ -122,10 +132,17 @@ async function extractDataFromPdf(pdfBuffer: Buffer) {
           }
         }
       }
-    }
-  });
+    });
 
-  return JSON.parse(response.text);
+    if (!response || !response.text) {
+      throw new Error("No response or text from Gemini");
+    }
+
+    return JSON.parse(response.text);
+  } catch (error: any) {
+    console.error("Gemini AI error:", error);
+    throw error;
+  }
 }
 
 app.post("/api/upload", upload.single("pdf"), async (req, res) => {
