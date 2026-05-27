@@ -25,7 +25,8 @@ import {
   ChevronRight,
   Loader2,
   Menu,
-  X
+  X,
+  Layers
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { INITIAL_DATA } from './initialData';
@@ -33,10 +34,11 @@ import { DashboardState, StockData } from './types';
 import { extractBVCDataFromPdf } from './services/geminiService';
 import { db } from './lib/firebase';
 import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import MarketHeatMap from './components/MarketHeatMap';
 
 export default function App() {
   const [data, setData] = useState<DashboardState>(INITIAL_DATA);
-  const [view, setView] = useState<'dashboard' | 'spreadsheet'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'spreadsheet' | 'heatmap'>('dashboard');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoadingPersistence, setIsLoadingPersistence] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -48,6 +50,9 @@ export default function App() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const [hoveredTicker, setHoveredTicker] = useState<string | null>(null);
+  const [heatmapCurrency, setHeatmapCurrency] = useState<'bs' | 'usd'>('bs');
 
   useEffect(() => {
     // Listen for real-time updates from Firestore
@@ -297,7 +302,14 @@ export default function App() {
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${view === 'spreadsheet' ? 'bg-accent-blue/10 text-accent-blue' : 'text-text-dim hover:bg-white/5'}`}
               >
                 <FileSpreadsheet size={18} />
-                <span className="font-medium text-sm">Data Grid</span>
+                <span className="font-medium text-sm">Explorador de Acciones</span>
+              </button>
+              <button 
+                onClick={() => setView('heatmap')}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${view === 'heatmap' ? 'bg-accent-blue/10 text-accent-blue' : 'text-text-dim hover:bg-white/5'}`}
+              >
+                <Layers size={18} />
+                <span className="font-medium text-sm">Mapa de Calor</span>
               </button>
             </div>
           </div>
@@ -475,7 +487,14 @@ export default function App() {
                     className={`flex items-center gap-3 p-4 rounded-xl transition-all ${view === 'spreadsheet' ? 'bg-accent-blue/10 text-accent-blue' : 'bg-bg-center border border-grid-color text-text-main'}`}
                   >
                     <FileSpreadsheet size={20} />
-                    <span className="font-bold">Explorador de Mercado (Grid)</span>
+                    <span className="font-bold">Explorador de Acciones</span>
+                  </button>
+                  <button 
+                    onClick={() => { setView('heatmap'); setIsMobileMenuOpen(false); }}
+                    className={`flex items-center gap-3 p-4 rounded-xl transition-all ${view === 'heatmap' ? 'bg-accent-blue/10 text-accent-blue' : 'bg-bg-center border border-grid-color text-text-main'}`}
+                  >
+                    <Layers size={20} />
+                    <span className="font-bold">Mapa de Calor</span>
                   </button>
                 </div>
 
@@ -692,23 +711,23 @@ export default function App() {
                 </div>
 
               </motion.div>
-            ) : (
+            ) : view === 'spreadsheet' ? (
               <motion.div 
                 key="spreadsheet"
-                initial={{ opacity: 0, x: 20 }}
+                initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 className="bg-bg-center rounded-2xl border border-grid-color shadow-sm overflow-hidden"
               >
                 <div className="p-6 border-b border-grid-color space-y-4">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <h3 className="font-bold text-lg text-white">Explorador de Mercado</h3>
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" size={18} />
                       <input 
                         type="text" 
                         placeholder="Buscar por nombre o ticker..." 
-                        className="pl-10 pr-4 py-2 bg-bg-deep rounded-lg border border-grid-color text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-accent-blue/20 focus:border-accent-blue transition-all w-full md:w-80"
+                        className="pl-10 pr-4 py-2 bg-bg-deep rounded-lg border border-grid-color text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-accent-blue/20 focus:border-accent-blue transition-all w-full sm:w-64"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                       />
@@ -730,8 +749,18 @@ export default function App() {
                     </thead>
                     <tbody className="divide-y divide-grid-color/30">
                       {filteredStocks.map((stock) => (
-                        <tr key={stock.ticker} className="hover:bg-accent-blue/5 transition-colors">
-                          <td className="px-6 py-4 font-bold text-white">{stock.ticker}</td>
+                        <tr 
+                          key={stock.ticker} 
+                          onMouseEnter={() => setHoveredTicker(stock.ticker)}
+                          onMouseLeave={() => setHoveredTicker(null)}
+                          className={`hover:bg-accent-blue/5 transition-colors cursor-pointer ${hoveredTicker === stock.ticker ? 'bg-accent-blue/10' : ''}`}
+                        >
+                          <td className="px-6 py-4 font-bold text-white flex items-center gap-1.5">
+                            {stock.ticker}
+                            {hoveredTicker === stock.ticker && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-accent-blue ring-2 ring-accent-blue/20 animate-pulse" />
+                            )}
+                          </td>
                           <td className="px-6 py-4 text-text-main font-medium">{stock.name}</td>
                           <td className="px-6 py-4 font-mono font-medium">{stock.closeBs.toLocaleString()}</td>
                           <td className={`px-6 py-4 font-bold ${stock.changeBs > 0 ? 'text-accent-green' : stock.changeBs < 0 ? 'text-red-400' : 'text-text-dim'}`}>
@@ -752,6 +781,22 @@ export default function App() {
                     </div>
                   )}
                 </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="heatmap"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className="w-full"
+              >
+                <MarketHeatMap 
+                  stocks={filteredStocks}
+                  currency={heatmapCurrency}
+                  setCurrency={setHeatmapCurrency}
+                  hoveredTicker={hoveredTicker}
+                  onHoverTicker={setHoveredTicker}
+                />
               </motion.div>
             )}
           </AnimatePresence>
