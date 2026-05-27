@@ -205,8 +205,8 @@ export default function MarketHeatMap({
       </div>
 
       {/* Grid container */}
-      <div className="flex-1 min-h-[300px] max-h-[500px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-accent-blue/20">
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+      <div className="flex-1 min-h-[300px] max-h-[500px] overflow-y-auto p-[15px] scrollbar-thin scrollbar-thumb-accent-blue/20">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {processedStocks.map((stock) => {
             const change = getStockChange(stock);
             const price = getStockPrice(stock);
@@ -220,16 +220,16 @@ export default function MarketHeatMap({
             // Compute variable spans if sized by price
             let colSpan = 'col-span-1';
             let rowSpan = 'row-span-1';
-            let minHeight = 'min-h-[82px]';
+            let minHeight = 'min-h-[74px]';
 
             if (sizeBy === 'price') {
               // Higher priced stocks get larger tiles to indicate market premium
               if (price > 1500) {
                 colSpan = 'col-span-2';
-                minHeight = 'min-h-[105px]';
+                minHeight = 'min-h-[94px]';
               } else if (price > 700) {
                 colSpan = 'col-span-1';
-                minHeight = 'min-h-[105px]';
+                minHeight = 'min-h-[94px]';
               }
             }
 
@@ -243,10 +243,10 @@ export default function MarketHeatMap({
                   scale: 1,
                   boxShadow: isHovered ? '0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4)' : 'none'
                 }}
-                whileHover={{ scale: 1.03, y: -2 }}
+                whileHover={{ scale: 1.02, y: -1 }}
                 onMouseEnter={() => onHoverTicker(stock.ticker)}
                 onMouseLeave={() => onHoverTicker(null)}
-                className={`relative rounded-xl border p-3 flex flex-col justify-between transition-colors duration-150 cursor-pointer ${colSpan} ${rowSpan} ${minHeight} ${changeColor.bg} ${isHovered ? `border-accent-blue scale-[1.03] z-10 brightness-110` : 'border-grid-color'}`}
+                className={`relative rounded-xl border p-2.5 flex flex-col justify-between transition-colors duration-150 cursor-pointer ${colSpan} ${rowSpan} ${minHeight} ${changeColor.bg} ${isHovered ? `border-accent-blue scale-[1.02] z-10 brightness-110` : 'border-grid-color'}`}
                 id={`heatmap-tile-${stock.ticker}`}
               >
                 {/* Visual indicator of hovered state shared with grid */}
